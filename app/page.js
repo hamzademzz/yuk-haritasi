@@ -14,7 +14,6 @@ export default function HomePage() {
   const [kullanici, setKullanici] = useState(null);
   const [yukleniyor, setYukleniyor] = useState(true);
 
-  // KULLANICI KONTROLÜ: Sayfa yüklendiğinde giriş yapmış biri var mı bakıyoruz
   useEffect(() => {
     const kullaniciyiGetir = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -22,12 +21,9 @@ export default function HomePage() {
       setYukleniyor(false);
     };
     kullaniciyiGetir();
-
-    // Giriş/Çıkış yapıldığında sayfayı otomatik güncelle
     const { data: authDinleyici } = supabase.auth.onAuthStateChange((event, session) => {
       setKullanici(session?.user ?? null);
     });
-
     return () => authDinleyici.subscription.unsubscribe();
   }, []);
 
@@ -52,7 +48,7 @@ export default function HomePage() {
   return (
     <div className="w-full min-h-screen bg-white font-sans pb-24 lg:pb-0">
       
-      {/* ÜST MENÜ (HEADER) */}
+      {/* HEADER */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 lg:h-20 flex justify-between items-center">
           <div className="flex items-center gap-8">
@@ -72,11 +68,12 @@ export default function HomePage() {
             {!yukleniyor && (
               <>
                 {kullanici ? (
-                  /* GİRİŞ YAPMIŞ KULLANICI GÖRÜNÜMÜ */
                   <div className="flex items-center gap-4">
                     <div className="text-right hidden sm:block">
                       <p className="text-[10px] font-bold text-gray-400 uppercase leading-none">Hoşgeldin</p>
-                      <p className="text-xs font-black text-[#1e3a5f]">{kullanici.email.split('@')[0]}</p>
+                      <p className="text-xs font-black text-[#1e3a5f]">
+                        {kullanici.user_metadata?.first_name || kullanici.email.split('@')[0]}
+                      </p>
                     </div>
                     <button 
                       onClick={cikisYap}
@@ -86,7 +83,6 @@ export default function HomePage() {
                     </button>
                   </div>
                 ) : (
-                  /* GİRİŞ YAPMAMIŞ KULLANICI GÖRÜNÜMÜ */
                   <>
                     <Link href="/login">
                       <button className="px-4 py-2 text-xs font-bold border rounded-lg text-[#1e3a5f] hover:bg-gray-50 transition">
@@ -114,7 +110,6 @@ export default function HomePage() {
             <p className="text-gray-300 text-lg max-w-xl mx-auto lg:mx-0">Türkiye'nin dört bir yanındaki taşıyıcılar, yük sahipleri ve lojistik firmaları tek platformda.</p>
           </div>
           
-          {/* Arama Paneli */}
           <div className="w-full max-w-xl bg-white rounded-3xl p-2 shadow-2xl">
             <div className="flex p-1">
               <button className="flex-1 py-3 text-sm font-black text-[#f58220] bg-orange-50 rounded-2xl flex items-center justify-center gap-2">
@@ -213,7 +208,6 @@ export default function HomePage() {
               ))}
             </div>
             
-            {/* CTA CARD */}
             <div className="bg-[#1e3a5f] rounded-3xl p-8 text-white relative overflow-hidden">
                <h4 className="text-xl font-black mb-4 leading-tight">Tüm İlanlara Erişmek İçin Üye Olun</h4>
                <p className="text-sm text-gray-400 mb-8 leading-relaxed">İletişim bilgilerini görüntüleyin, teklif verin, daha fazla iş fırsatına ulaşın.</p>
