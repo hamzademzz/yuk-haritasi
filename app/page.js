@@ -8,7 +8,7 @@ import {
   UserPlus, SearchCode, Handshake, Lock, ArrowRight, LogOut
 } from 'lucide-react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../lib/supabase';
 
 export default function HomePage() {
   const [kullanici, setKullanici] = useState(null);
