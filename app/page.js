@@ -8,11 +8,29 @@ import {
   UserPlus, SearchCode, Handshake, Lock, ArrowRight, LogOut
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabase';
 
+// TÜRKİYE ŞEHİRLERİ LİSTESİ
+const SEHIRLER = [
+  "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Amasya", "Ankara", "Antalya", "Artvin", "Aydın", "Balıkesir", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkari", "Hatay", "Isparta", "Mersin", "İstanbul", "İzmir", "Kars", "Kastamonu", "Kayseri", "Kırklareli", "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Kahramanmaraş", "Mardin", "Muğla", "Muş", "Nevşehir", "Niğde", "Ordu", "Rize", "Sakarya", "Samsun", "Siirt", "Sinop", "Sivas", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Şanlıurfa", "Uşak", "Van", "Yozgat", "Zonguldak", "Aksaray", "Bayburt", "Karaman", "Kırıkkale", "Batman", "Şırnak", "Bartın", "Ardahan", "Iğdır", "Yalova", "Karabük", "Kilis", "Osmaniye", "Düzce"
+].sort((a, b) => a.localeCompare(b, 'tr'));
+
+// ARAÇ TİPLERİ LİSTESİ
+const ARAC_TIPLERI = [
+  "Tır (Tenteli)", "Tır (Açık)", "Tır (Frigo)", "Kamyon (Onteker)", "Kamyon (Kırkayak)", "Kamyonet", "Panelvan", "Lowbed", "Damperli"
+];
+
 export default function HomePage() {
+  const router = useRouter();
   const [kullanici, setKullanici] = useState(null);
   const [yukleniyor, setYukleniyor] = useState(true);
+
+  // Arama Formu State'leri
+  const [nereden, setNereden] = useState("");
+  const [nereye, setNereye] = useState("");
+  const [aracTipi, setAracTipi] = useState("");
+  const [aktifTab, setAktifTab] = useState("yuk");
 
   useEffect(() => {
     const kullaniciyiGetir = async () => {
@@ -32,6 +50,15 @@ export default function HomePage() {
     window.location.reload(); 
   };
 
+  const handleBul = () => {
+    const params = new URLSearchParams({
+      nereden,
+      nereye,
+      aracTipi
+    });
+    router.push(`/yukler?${params.toString()}`);
+  };
+
   const ilanlar = [
     { rota: "İstanbul → Ankara", yuk: "Parça Yük", arac: "Kamyon", tarih: "25 Mayıs 2024" },
     { rota: "Mersin → İzmir", yuk: "Komple Yük", arac: "Tır / Tenteli", tarih: "24 Mayıs 2024" },
@@ -46,8 +73,16 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="w-full min-h-screen bg-white font-sans pb-24 lg:pb-0">
+    <div className="w-full min-h-screen bg-white font-sans pb-24 lg:pb-0 text-gray-900">
       
+      {/* DATALISTS FOR SEARCHABLE DROPDOWNS */}
+      <datalist id="sehirler">
+        {SEHIRLER.map(sehir => <option key={sehir} value={sehir} />)}
+      </datalist>
+      <datalist id="arac-tipleri">
+        {ARAC_TIPLERI.map(tip => <option key={tip} value={tip} />)}
+      </datalist>
+
       {/* HEADER */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 lg:h-20 flex justify-between items-center">
@@ -57,7 +92,7 @@ export default function HomePage() {
               <span className="text-[10px] font-bold text-gray-400 -mt-1 uppercase tracking-widest">Türkiye'nin Yük Haritası</span>
             </Link>
             <nav className="hidden lg:flex items-center gap-5 text-[13px] font-bold text-gray-600">
-              <Link href="#" className="hover:text-[#f58220] transition">Yük İlanları</Link>
+              <Link href="/yukler" className="hover:text-[#f58220] transition">Yük İlanları</Link>
               <Link href="#" className="hover:text-[#f58220]">Araç İlanları</Link>
               <Link href="#" className="hover:text-[#f58220]">Firma Rehberi</Link>
               <Link href="#" className="hover:text-[#f58220]">İletişim</Link>
@@ -75,25 +110,14 @@ export default function HomePage() {
                         {kullanici.user_metadata?.first_name || kullanici.email.split('@')[0]}
                       </p>
                     </div>
-                    <button 
-                      onClick={cikisYap}
-                      className="flex items-center gap-2 px-4 py-2 text-xs font-bold border border-red-100 rounded-lg text-red-500 hover:bg-red-50 transition"
-                    >
+                    <button onClick={cikisYap} className="flex items-center gap-2 px-4 py-2 text-xs font-bold border border-red-100 rounded-lg text-red-500">
                       <LogOut size={14} /> Çıkış
                     </button>
                   </div>
                 ) : (
                   <>
-                    <Link href="/login">
-                      <button className="px-4 py-2 text-xs font-bold border rounded-lg text-[#1e3a5f] hover:bg-gray-50 transition">
-                        Giriş Yap
-                      </button>
-                    </Link>
-                    <Link href="/register">
-                      <button className="px-4 py-2 text-xs font-bold bg-[#f58220] text-white rounded-lg shadow-lg shadow-orange-100 hover:bg-[#e0721a] transition">
-                        Üye Ol
-                      </button>
-                    </Link>
+                    <Link href="/login"><button className="px-4 py-2 text-xs font-bold border rounded-lg text-[#1e3a5f]">Giriş Yap</button></Link>
+                    <Link href="/register"><button className="px-4 py-2 text-xs font-bold bg-[#f58220] text-white rounded-lg shadow-lg">Üye Ol</button></Link>
                   </>
                 )}
               </>
@@ -107,33 +131,57 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-10 relative z-10">
           <div className="text-white text-center lg:text-left flex-1">
             <h1 className="text-4xl lg:text-6xl font-black mb-4 leading-tight">Yükünü Taşıyacak <br/><span className="text-[#f58220]">Doğru Adres</span></h1>
-            <p className="text-gray-300 text-lg max-w-xl mx-auto lg:mx-0">Türkiye'nin dört bir yanındaki taşıyıcılar, yük sahipleri ve lojistik firmaları tek platformda.</p>
+            <p className="text-gray-300 text-lg max-w-xl mx-auto lg:mx-0">Türkiye'nin her yerine güvenli taşımacılık çözümleri.</p>
           </div>
           
-          <div className="w-full max-w-xl bg-white rounded-3xl p-2 shadow-2xl">
+          <div className="w-full max-w-xl bg-white rounded-3xl p-2 shadow-2xl border border-white/20">
             <div className="flex p-1">
-              <button className="flex-1 py-3 text-sm font-black text-[#f58220] bg-orange-50 rounded-2xl flex items-center justify-center gap-2">
+              <button onClick={() => setAktifTab("yuk")} className={`flex-1 py-3 text-sm font-black rounded-2xl flex items-center justify-center gap-2 transition ${aktifTab === 'yuk' ? 'text-[#f58220] bg-orange-50' : 'text-gray-400'}`}>
                 <Truck size={18}/> Yük Ara
               </button>
-              <button className="flex-1 py-3 text-sm font-bold text-gray-400 flex items-center justify-center gap-2">
+              <button onClick={() => setAktifTab("arac")} className={`flex-1 py-3 text-sm font-black rounded-2xl flex items-center justify-center gap-2 transition ${aktifTab === 'arac' ? 'text-[#f58220] bg-orange-50' : 'text-gray-400'}`}>
                 <Search size={18}/> Araç Ara
               </button>
             </div>
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-gray-400 ml-1">Nereden?</label>
-                <select className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none"><option>Şehir Seçin</option></select>
+                <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase">Nereden?</label>
+                <div className="relative">
+                  <MapPin size={16} className="absolute left-3 top-3.5 text-gray-400" />
+                  <input 
+                    list="sehirler" 
+                    value={nereden}
+                    onChange={(e) => setNereden(e.target.value)}
+                    className="w-full p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold text-gray-900 focus:ring-2 ring-orange-100" 
+                    placeholder="Şehir Ara veya Seç..." 
+                  />
+                </div>
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-gray-400 ml-1">Nereye?</label>
-                <select className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none"><option>Şehir Seçin</option></select>
-              </div>
-              <div className="md:col-span-2 flex gap-3">
-                <div className="flex-1 space-y-1">
-                  <label className="text-[11px] font-bold text-gray-400 ml-1">Araç Tipi</label>
-                  <select className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none"><option>Tümü</option></select>
+                <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase">Nereye?</label>
+                <div className="relative">
+                  <MapPin size={16} className="absolute left-3 top-3.5 text-gray-400" />
+                  <input 
+                    list="sehirler" 
+                    value={nereye}
+                    onChange={(e) => setNereye(e.target.value)}
+                    className="w-full p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold text-gray-900 focus:ring-2 ring-orange-100" 
+                    placeholder="Şehir Ara veya Seç..." 
+                  />
                 </div>
-                <button className="self-end bg-[#1e3a5f] text-white p-3 px-8 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition">
+              </div>
+              <div className="md:col-span-2 flex gap-3 pt-2">
+                <div className="flex-1 space-y-1">
+                  <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase">Araç Tipi</label>
+                  <input 
+                    list="arac-tipleri" 
+                    value={aracTipi}
+                    onChange={(e) => setAracTipi(e.target.value)}
+                    className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold text-gray-900" 
+                    placeholder="Araç Tipi Ara..." 
+                  />
+                </div>
+                <button onClick={handleBul} className="self-end bg-[#1e3a5f] text-white p-3 px-8 rounded-xl font-black text-sm flex items-center gap-2 hover:bg-black transition active:scale-95 shadow-lg shadow-blue-900/10">
                   <Search size={18}/> Bul
                 </button>
               </div>
@@ -144,20 +192,20 @@ export default function HomePage() {
 
       {/* TRUST BADGES */}
       <div className="bg-[#162d4a] text-white">
-        <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="flex items-center gap-3 border-r border-white/10 last:border-0">
+        <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-2 lg:grid-cols-4 gap-4 text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row items-center gap-3 border-r border-white/10 last:border-0">
             <User size={20} className="text-[#f58220]"/>
             <div><p className="text-xs font-black">10.000+</p><p className="text-[10px] text-gray-400">Aktif Üye</p></div>
           </div>
-          <div className="flex items-center gap-3 border-r border-white/10 last:border-0">
+          <div className="flex flex-col sm:flex-row items-center gap-3 border-r border-white/10 last:border-0">
             <ShieldCheck size={20} className="text-[#f58220]"/>
             <div><p className="text-xs font-black">Güvenli</p><p className="text-[10px] text-gray-400">Doğrulanmış Üyeler</p></div>
           </div>
-          <div className="flex items-center gap-3 border-r border-white/10 last:border-0">
+          <div className="flex flex-col sm:flex-row items-center gap-3 border-r border-white/10 last:border-0">
             <Zap size={20} className="text-[#f58220]"/>
             <div><p className="text-xs font-black">Hızlı Eşleşme</p><p className="text-[10px] text-gray-400">Doğru Yük & Araç</p></div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
             <Headset size={20} className="text-[#f58220]"/>
             <div><p className="text-xs font-black">7/24 Destek</p><p className="text-[10px] text-gray-400">Yanınızdayız</p></div>
           </div>
@@ -168,13 +216,13 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-4 py-16">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-black text-[#1e3a5f]">Güncel Yük İlanları</h2>
-          <Link href="#" className="text-[#f58220] font-bold text-sm flex items-center gap-1">Tüm İlanlara Göz At <ArrowRight size={16}/></Link>
+          <Link href="/yukler" className="text-[#f58220] font-bold text-sm flex items-center gap-1">Tüm İlanlara Göz At <ArrowRight size={16}/></Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {ilanlar.map((ilan, i) => (
-            <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+            <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition group">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-black text-[#1e3a5f]">{ilan.rota}</span>
+                <span className="text-sm font-black text-[#1e3a5f] group-hover:text-[#f58220] transition">{ilan.rota}</span>
                 <Truck size={16} className="text-gray-300"/>
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
@@ -228,15 +276,15 @@ export default function HomePage() {
 
       {/* FOOTER */}
       <footer className="bg-[#12243d] text-white pt-20 pb-10 px-4">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-12 border-b border-white/5 pb-16">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-12 border-b border-white/5 pb-16 text-center md:text-left">
           <div className="col-span-1">
-             <div className="text-2xl font-black mb-4">Yük<span className="text-[#f58220]">Haritası</span></div>
-             <p className="text-sm text-gray-400 leading-relaxed">Türkiye'nin lojistik platformu. Doğru yük, doğru araç ve güvenilir hizmetin buluşma noktası.</p>
+             <div className="text-2xl font-black mb-4 italic">Yük<span className="text-[#f58220]">Haritası</span></div>
+             <p className="text-sm text-gray-400 leading-relaxed max-w-xs mx-auto md:mx-0">Türkiye'nin lojistik platformu. Doğru yük, doğru araç ve güvenilir hizmetin buluşma noktası.</p>
           </div>
           <div>
             <h5 className="font-bold text-xs uppercase tracking-widest text-[#f58220] mb-6">Hızlı Erişim</h5>
             <div className="flex flex-col gap-3 text-sm text-gray-400 font-medium">
-              <Link href="#" className="hover:text-white">Yük İlanları</Link>
+              <Link href="/yukler" className="hover:text-white">Yük İlanları</Link>
               <Link href="#" className="hover:text-white">Araç İlanları</Link>
               <Link href="#" className="hover:text-white">Firma Rehberi</Link>
             </div>
@@ -249,14 +297,14 @@ export default function HomePage() {
               <Link href="#" className="hover:text-white">İletişim</Link>
             </div>
           </div>
-          <div className="bg-[#1e3a5f] bg-opacity-40 p-6 rounded-2xl">
+          <div className="bg-[#1e3a5f] bg-opacity-40 p-6 rounded-2xl border border-white/5">
              <p className="text-xs font-bold mb-4">Araç üzerindeki QR kodu okut, firmayı doğrula!</p>
-             <div className="bg-white p-2 w-24 h-24 rounded-xl mx-auto md:mx-0">
+             <div className="bg-white p-2 w-24 h-24 rounded-xl mx-auto md:mx-0 shadow-lg">
                <QrCode size={80} className="text-[#1e3a5f]" />
              </div>
           </div>
         </div>
-        <p className="text-center text-[10px] text-gray-500 font-medium uppercase tracking-widest">© 2024 YükHaritası. Tüm hakları saklıdır.</p>
+        <p className="text-center text-[10px] text-gray-500 font-medium uppercase tracking-widest pb-8 lg:pb-0">© 2024 YükHaritası. Tüm hakları saklıdır.</p>
       </footer>
 
       {/* MOBİL ALT NAVİGASYON */}
@@ -265,7 +313,7 @@ export default function HomePage() {
           <Home size={22} />
           <span className="text-[10px] font-black uppercase tracking-tighter">Ana Sayfa</span>
         </Link>
-        <Link href="#" className="flex flex-col items-center gap-1 text-gray-400">
+        <Link href="/yukler" className="flex flex-col items-center gap-1 text-gray-400">
           <Truck size={22} />
           <span className="text-[10px] font-black uppercase tracking-tighter">İlanlar</span>
         </Link>
