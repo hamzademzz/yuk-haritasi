@@ -1,15 +1,15 @@
 "use client";
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Truck, MapPin, Calendar, Weight, User, Phone, Star, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function YuklerPage() {
+// 1. Create a separate component for the list logic
+function YukListesi() {
   const searchParams = useSearchParams();
   const nereden = searchParams.get('nereden');
   const nereye = searchParams.get('nereye');
 
-  // Statik Sahte Veriler
   const sahteYukler = [
     { 
       id: 1, 
@@ -40,7 +40,7 @@ export default function YuklerPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <>
       {/* Üst Bilgi Paneli */}
       <div className="bg-[#1e3a5f] text-white pt-10 pb-20 px-4">
         <div className="max-w-5xl mx-auto">
@@ -59,7 +59,6 @@ export default function YuklerPage() {
         <div className="grid gap-6">
           {sahteYukler.map((yuk) => (
             <div key={yuk.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row">
-              {/* Sol Taraf: Yük Detayları */}
               <div className="p-8 flex-1 border-r border-gray-50">
                 <div className="flex justify-between items-start mb-6">
                   <div>
@@ -73,31 +72,31 @@ export default function YuklerPage() {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 text-gray-900">
                     <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-[#1e3a5f]">
                       <Weight size={20}/>
                     </div>
                     <div>
                       <p className="text-[10px] text-gray-400 font-bold uppercase">Ağırlık</p>
-                      <p className="text-sm font-black text-gray-700">{yuk.agirlik}</p>
+                      <p className="text-sm font-black italic">{yuk.agirlik}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 text-gray-900">
                     <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-[#1e3a5f]">
                       <Truck size={20}/>
                     </div>
                     <div>
                       <p className="text-[10px] text-gray-400 font-bold uppercase">Araç</p>
-                      <p className="text-sm font-black text-gray-700">{yuk.arac}</p>
+                      <p className="text-sm font-black italic">{yuk.arac}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 text-gray-900">
                     <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-[#1e3a5f]">
                       <Calendar size={20}/>
                     </div>
                     <div>
                       <p className="text-[10px] text-gray-400 font-bold uppercase">Tarih</p>
-                      <p className="text-sm font-black text-gray-700">{yuk.tarih}</p>
+                      <p className="text-sm font-black italic">{yuk.tarih}</p>
                     </div>
                   </div>
                 </div>
@@ -116,30 +115,26 @@ export default function YuklerPage() {
                 </div>
               </div>
 
-              {/* Sağ Taraf: İlan Sahibi */}
               <div className="bg-gray-50/50 p-8 md:w-80 border-t md:border-t-0 md:border-l border-gray-100 flex flex-col justify-between">
                 <div>
-                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">İlan Sahibi Bilgileri</h4>
-                  <div className="flex items-center gap-3 mb-4">
+                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 text-gray-900">İlan Sahibi</h4>
+                  <div className="flex items-center gap-3 mb-4 text-gray-900">
                     <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center text-[#1e3a5f] border-2 border-white">
                       <User size={24}/>
                     </div>
                     <div>
-                      <p className="font-black text-[#1e3a5f] leading-tight">{yuk.sahibi}</p>
+                      <p className="font-black leading-tight">{yuk.sahibi}</p>
                       <div className="flex text-orange-400 gap-0.5 mt-1">
                         {[...Array(5)].map((_, i) => <Star key={i} size={10} fill={i < yuk.puan ? "currentColor" : "none"} />)}
-                        <span className="text-[10px] text-gray-400 ml-1">(8)</span>
                       </div>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                  <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
                        <MapPin size={14}/> {yuk.konum}
-                    </div>
                   </div>
                 </div>
 
-                <button className="w-full mt-8 py-4 bg-[#22c55e] text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-green-100 hover:scale-[1.02] active:scale-95 transition-all">
+                <button className="w-full mt-8 py-4 bg-[#22c55e] text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg hover:brightness-110 active:scale-95 transition-all">
                   <Phone size={18}/> İLAN SAHİBİNİ ARA
                 </button>
               </div>
@@ -147,6 +142,17 @@ export default function YuklerPage() {
           ))}
         </div>
       </div>
+    </>
+  );
+}
+
+// 2. Wrap everything in Suspense in the main export
+export default function YuklerPage() {
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <Suspense fallback={<div className="p-20 text-center font-bold text-[#1e3a5f]">Yükler Yükleniyor...</div>}>
+        <YukListesi />
+      </Suspense>
     </div>
   );
 }
