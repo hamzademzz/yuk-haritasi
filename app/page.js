@@ -5,31 +5,27 @@ import {
   Phone, MapPin, Menu, ChevronRight, 
   Home, PlusCircle, Bell, User, Search, Truck,
   CheckCircle, Zap, ShieldCheck, Headset, QrCode,
-  UserPlus, SearchCode, Handshake, Lock, ArrowRight, LogOut
+  UserPlus, SearchCode, Handshake, Lock, ArrowRight, LogOut, Building2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabase';
 
-// TÜRKİYE ŞEHİRLERİ LİSTESİ
 const SEHIRLER = [
   "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Amasya", "Ankara", "Antalya", "Artvin", "Aydın", "Balıkesir", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkari", "Hatay", "Isparta", "Mersin", "İstanbul", "İzmir", "Kars", "Kastamonu", "Kayseri", "Kırklareli", "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Kahramanmaraş", "Mardin", "Muğla", "Muş", "Nevşehir", "Niğde", "Ordu", "Rize", "Sakarya", "Samsun", "Siirt", "Sinop", "Sivas", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Şanlıurfa", "Uşak", "Van", "Yozgat", "Zonguldak", "Aksaray", "Bayburt", "Karaman", "Kırıkkale", "Batman", "Şırnak", "Bartın", "Ardahan", "Iğdır", "Yalova", "Karabük", "Kilis", "Osmaniye", "Düzce"
 ].sort((a, b) => a.localeCompare(b, 'tr'));
 
-// ARAÇ TİPLERİ LİSTESİ
-const ARAC_TIPLERI = [
-  "Tır (Tenteli)", "Tır (Açık)", "Tır (Frigo)", "Kamyon (Onteker)", "Kamyon (Kırkayak)", "Kamyonet", "Panelvan", "Lowbed", "Damperli"
-];
+const ARAC_TIPLERI = ["Tır (Tenteli)", "Tır (Açık)", "Tır (Frigo)", "Kamyon (Onteker)", "Kamyon (Kırkayak)", "Kamyonet", "Panelvan", "Lowbed", "Damperli"];
 
 export default function HomePage() {
   const router = useRouter();
   const [kullanici, setKullanici] = useState(null);
   const [yukleniyor, setYukleniyor] = useState(true);
 
-  // Arama Formu State'leri
   const [nereden, setNereden] = useState("");
   const [nereye, setNereye] = useState("");
   const [aracTipi, setAracTipi] = useState("");
+  const [firmaAdi, setFirmaAdi] = useState("");
   const [aktifTab, setAktifTab] = useState("yuk");
 
   useEffect(() => {
@@ -51,12 +47,12 @@ export default function HomePage() {
   };
 
   const handleBul = () => {
-    const params = new URLSearchParams({
-      nereden,
-      nereye,
-      aracTipi
-    });
-    router.push(`/yukler?${params.toString()}`);
+    if (aktifTab === "firma") {
+      router.push(`/firma-rehberi?arama=${firmaAdi}&sehir=${nereden}`);
+    } else {
+      const params = new URLSearchParams({ nereden, nereye, aracTipi });
+      router.push(`/yukler?${params.toString()}`);
+    }
   };
 
   const ilanlar = [
@@ -75,7 +71,6 @@ export default function HomePage() {
   return (
     <div className="w-full min-h-screen bg-white font-sans pb-24 lg:pb-0 text-gray-900">
       
-      {/* DATALISTS FOR SEARCHABLE DROPDOWNS */}
       <datalist id="sehirler">
         {SEHIRLER.map(sehir => <option key={sehir} value={sehir} />)}
       </datalist>
@@ -130,61 +125,70 @@ export default function HomePage() {
       <section className="relative bg-[#1e3a5f] bg-opacity-[0.98] py-12 lg:py-20 px-4 overflow-hidden">
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-10 relative z-10">
           <div className="text-white text-center lg:text-left flex-1">
-            <h1 className="text-4xl lg:text-6xl font-black mb-4 leading-tight">Yükünü Taşıyacak <br/><span className="text-[#f58220]">Doğru Adres</span></h1>
-            <p className="text-gray-300 text-lg max-w-xl mx-auto lg:mx-0">Türkiye'nin her yerine güvenli taşımacılık çözümleri.</p>
+            <h1 className="text-4xl lg:text-6xl font-black mb-4 leading-tight">Lojistik Dünyası <br/><span className="text-[#f58220]">Tek Platformda</span></h1>
+            <p className="text-gray-300 text-lg max-w-xl mx-auto lg:mx-0">Doğru yük, doğru araç ve güvenilir firmalarla hemen buluşun.</p>
           </div>
           
           <div className="w-full max-w-xl bg-white rounded-3xl p-2 shadow-2xl border border-white/20">
-            <div className="flex p-1">
-              <button onClick={() => setAktifTab("yuk")} className={`flex-1 py-3 text-sm font-black rounded-2xl flex items-center justify-center gap-2 transition ${aktifTab === 'yuk' ? 'text-[#f58220] bg-orange-50' : 'text-gray-400'}`}>
-                <Truck size={18}/> Yük Ara
+            <div className="flex p-1 bg-gray-50 rounded-2xl mb-2">
+              <button onClick={() => setAktifTab("yuk")} className={`flex-1 py-3 text-[11px] font-black rounded-xl transition ${aktifTab === 'yuk' ? 'text-[#f58220] bg-white shadow-sm' : 'text-gray-400'}`}>
+                YÜK ARA
               </button>
-              <button onClick={() => setAktifTab("arac")} className={`flex-1 py-3 text-sm font-black rounded-2xl flex items-center justify-center gap-2 transition ${aktifTab === 'arac' ? 'text-[#f58220] bg-orange-50' : 'text-gray-400'}`}>
-                <Search size={18}/> Araç Ara
+              <button onClick={() => setAktifTab("arac")} className={`flex-1 py-3 text-[11px] font-black rounded-xl transition ${aktifTab === 'arac' ? 'text-[#f58220] bg-white shadow-sm' : 'text-gray-400'}`}>
+                ARAÇ ARA
+              </button>
+              <button onClick={() => setAktifTab("firma")} className={`flex-1 py-3 text-[11px] font-black rounded-xl transition ${aktifTab === 'firma' ? 'text-[#f58220] bg-white shadow-sm' : 'text-gray-400'}`}>
+                FİRMA BUL
               </button>
             </div>
+            
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase">Nereden?</label>
-                <div className="relative">
-                  <MapPin size={16} className="absolute left-3 top-3.5 text-gray-400" />
-                  <input 
-                    list="sehirler" 
-                    value={nereden}
-                    onChange={(e) => setNereden(e.target.value)}
-                    className="w-full p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold text-gray-900 focus:ring-2 ring-orange-100" 
-                    placeholder="Şehir Ara veya Seç..." 
-                  />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase">Nereye?</label>
-                <div className="relative">
-                  <MapPin size={16} className="absolute left-3 top-3.5 text-gray-400" />
-                  <input 
-                    list="sehirler" 
-                    value={nereye}
-                    onChange={(e) => setNereye(e.target.value)}
-                    className="w-full p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold text-gray-900 focus:ring-2 ring-orange-100" 
-                    placeholder="Şehir Ara veya Seç..." 
-                  />
-                </div>
-              </div>
-              <div className="md:col-span-2 flex gap-3 pt-2">
-                <div className="flex-1 space-y-1">
-                  <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase">Araç Tipi</label>
-                  <input 
-                    list="arac-tipleri" 
-                    value={aracTipi}
-                    onChange={(e) => setAracTipi(e.target.value)}
-                    className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold text-gray-900" 
-                    placeholder="Araç Tipi Ara..." 
-                  />
-                </div>
-                <button onClick={handleBul} className="self-end bg-[#1e3a5f] text-white p-3 px-8 rounded-xl font-black text-sm flex items-center gap-2 hover:bg-black transition active:scale-95 shadow-lg shadow-blue-900/10">
-                  <Search size={18}/> Bul
-                </button>
-              </div>
+              {aktifTab === "firma" ? (
+                <>
+                  <div className="md:col-span-2 space-y-1">
+                    <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase">Firma Adı</label>
+                    <div className="relative">
+                      <Building2 size={16} className="absolute left-3 top-3.5 text-gray-400" />
+                      <input value={firmaAdi} onChange={(e) => setFirmaAdi(e.target.value)} className="w-full p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold" placeholder="Firma ismi yazın..." />
+                    </div>
+                  </div>
+                  <div className="md:col-span-2 flex gap-3">
+                    <div className="flex-1 space-y-1">
+                      <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase">Şehir</label>
+                      <input list="sehirler" value={nereden} onChange={(e) => setNereden(e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold" placeholder="Şehir Seçin..." />
+                    </div>
+                    <button onClick={handleBul} className="self-end bg-[#1e3a5f] text-white p-3 px-8 rounded-xl font-black text-sm flex items-center gap-2 hover:bg-black transition shadow-lg shadow-blue-900/10">
+                      <Search size={18}/> Bul
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase">Nereden?</label>
+                    <div className="relative">
+                      <MapPin size={16} className="absolute left-3 top-3.5 text-gray-400" />
+                      <input list="sehirler" value={nereden} onChange={(e) => setNereden(e.target.value)} className="w-full p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold" placeholder="Şehir Seç..." />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase">Nereye?</label>
+                    <div className="relative">
+                      <MapPin size={16} className="absolute left-3 top-3.5 text-gray-400" />
+                      <input list="sehirler" value={nereye} onChange={(e) => setNereye(e.target.value)} className="w-full p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold" placeholder="Şehir Seç..." />
+                    </div>
+                  </div>
+                  <div className="md:col-span-2 flex gap-3">
+                    <div className="flex-1 space-y-1">
+                      <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase">Araç Tipi</label>
+                      <input list="arac-tipleri" value={aracTipi} onChange={(e) => setAracTipi(e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold" placeholder="Seçin..." />
+                    </div>
+                    <button onClick={handleBul} className="self-end bg-[#1e3a5f] text-white p-3 px-8 rounded-xl font-black text-sm flex items-center gap-2 hover:bg-black transition shadow-lg shadow-blue-900/10">
+                      <Search size={18}/> Bul
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -307,30 +311,30 @@ export default function HomePage() {
         <p className="text-center text-[10px] text-gray-500 font-medium uppercase tracking-widest pb-8 lg:pb-0">© 2024 YükHaritası. Tüm hakları saklıdır.</p>
       </footer>
 
-      {/* MOBİL ALT NAVİGASYON */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 h-20 flex justify-between items-center z-[100] lg:hidden shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
-        <Link href="/" className="flex flex-col items-center gap-1 text-[#1e3a5f]">
-          <Home size={22} />
-          <span className="text-[10px] font-black uppercase tracking-tighter">Ana Sayfa</span>
+      {/* MOBİL ALT NAVİGASYON (GÜNCELLENDİ: FİRMA REHBERİ EKLENDİ) */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 h-20 flex justify-between items-center z-[100] lg:hidden shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+        <Link href="/" className="flex flex-col items-center gap-1 text-[#1e3a5f] flex-1">
+          <Home size={20} />
+          <span className="text-[9px] font-black uppercase tracking-tighter">Ana Sayfa</span>
         </Link>
-        <Link href="/yukler" className="flex flex-col items-center gap-1 text-gray-400">
-          <Truck size={22} />
-          <span className="text-[10px] font-black uppercase tracking-tighter">İlanlar</span>
+        <Link href="/yukler" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
+          <Truck size={20} />
+          <span className="text-[9px] font-black uppercase tracking-tighter">İlanlar</span>
         </Link>
-        <div className="relative -mt-12">
+        <div className="relative -mt-12 flex-1 flex justify-center">
           <Link href="/ilan-ver">
             <div className="w-16 h-16 bg-[#f58220] rounded-full flex items-center justify-center text-white shadow-xl shadow-orange-200 border-4 border-white active:scale-90 transition">
-              <PlusCircle size={30} />
+              <PlusCircle size={28} />
             </div>
           </Link>
         </div>
-        <Link href="/bildirimler" className="flex flex-col items-center gap-1 text-gray-400">
-          <Bell size={22} />
-          <span className="text-[10px] font-black uppercase tracking-tighter">Bildirim</span>
+        <Link href="#" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
+          <Building2 size={20} />
+          <span className="text-[9px] font-black uppercase tracking-tighter">Firmalar</span>
         </Link>
-        <Link href="/profil" className="flex flex-col items-center gap-1 text-gray-400">
-          <User size={22} />
-          <span className="text-[10px] font-black uppercase tracking-tighter">Profil</span>
+        <Link href="/profil" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
+          <User size={20} />
+          <span className="text-[9px] font-black uppercase tracking-tighter">Profil</span>
         </Link>
       </nav>
 
