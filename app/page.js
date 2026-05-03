@@ -107,7 +107,7 @@ export default function HomePage() {
         {ARAC_TIPLERI.map(tip => <option key={tip} value={tip} />)}
       </datalist>
 
-      {/* HEADER */}
+      {/* HEADER - UPDATED TO MATCH NEW NAVIGATION */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 lg:h-20 flex justify-between items-center">
           <div className="flex items-center gap-8">
@@ -115,11 +115,13 @@ export default function HomePage() {
               <span className="text-2xl font-black tracking-tighter text-[#1e3a5f]">Yük<span className="text-[#f58220]">Haritası</span></span>
               <span className="text-[10px] font-bold text-gray-400 -mt-1 uppercase tracking-widest">Türkiye'nin Yük Haritası</span>
             </Link>
-            <nav className="hidden lg:flex items-center gap-5 text-[13px] font-bold text-gray-600">
+            <nav className="hidden lg:flex items-center gap-6 text-[13px] font-bold text-gray-600">
               <Link href="/yukler" className="hover:text-[#f58220] transition">Yük İlanları</Link>
-              <Link href="#" className="hover:text-[#f58220]">Araç İlanları</Link>
-              <Link href="#" className="hover:text-[#f58220]">Firma Rehberi</Link>
-              <Link href="#" className="hover:text-[#f58220]">İletişim</Link>
+              <Link href="/araclar" className="hover:text-[#f58220] transition">Araç İlanları</Link>
+              <Link href="/firmalar" className="hover:text-[#f58220] transition">Firma Rehberi</Link>
+              <Link href="/ilan-ver" className="flex items-center gap-1.5 text-[#f58220]">
+                <PlusCircle size={16}/> İlan Ver
+              </Link>
             </nav>
           </div>
 
@@ -128,13 +130,13 @@ export default function HomePage() {
               <>
                 {kullanici ? (
                   <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase leading-none">Hoşgeldin</p>
-                      <p className="text-xs font-black text-[#1e3a5f]">
+                    <Link href="/profil" className="text-right group">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase leading-none">Hesabım</p>
+                      <p className="text-xs font-black text-[#1e3a5f] group-hover:text-[#f58220]">
                         {kullanici.profile_name || kullanici.email.split('@')[0]}
                       </p>
-                    </div>
-                    <button onClick={cikisYap} className="flex items-center gap-2 px-4 py-2 text-xs font-bold border border-red-100 rounded-lg text-red-500">
+                    </Link>
+                    <button onClick={cikisYap} className="flex items-center gap-2 px-4 py-2 text-xs font-bold border border-red-100 rounded-lg text-red-500 hover:bg-red-50 transition">
                       <LogOut size={14} /> Çıkış
                     </button>
                   </div>
@@ -245,7 +247,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* YENİ EKLENEN: LOJİSTİK HİZMETLER */}
+      {/* LOJİSTİK HİZMETLER */}
       <section className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex justify-between items-end mb-8">
           <div>
@@ -341,8 +343,8 @@ export default function HomePage() {
             <h5 className="font-bold text-xs uppercase tracking-widest text-[#f58220] mb-6">Hızlı Erişim</h5>
             <div className="flex flex-col gap-3 text-sm text-gray-400 font-medium">
               <Link href="/yukler" className="hover:text-white">Yük İlanları</Link>
-              <Link href="#" className="hover:text-white">Araç İlanları</Link>
-              <Link href="#" className="hover:text-white">Firma Rehberi</Link>
+              <Link href="/araclar" className="hover:text-white">Araç İlanları</Link>
+              <Link href="/firmalar" className="hover:text-white">Firma Rehberi</Link>
             </div>
           </div>
           <div>
@@ -363,31 +365,43 @@ export default function HomePage() {
         <p className="text-center text-[10px] text-gray-500 font-medium uppercase tracking-widest pb-8 lg:pb-0">© 2024 YükHaritası. Tüm hakları saklıdır.</p>
       </footer>
 
-      {/* MOBİL ALT NAVİGASYON */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 h-20 flex justify-between items-center z-[100] lg:hidden shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+      {/* MOBİL ALT NAVİGASYON - UPDATED WITH ALL REQUESTED ITEMS */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-1 h-20 flex justify-between items-center z-[100] lg:hidden shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+        
         <Link href="/" className="flex flex-col items-center gap-1 text-[#1e3a5f] flex-1">
-          <Home size={20} />
-          <span className="text-[9px] font-black uppercase tracking-tighter">Ana Sayfa</span>
+          <Home size={18} />
+          <span className="text-[8px] font-black uppercase tracking-tighter">Ana Sayfa</span>
         </Link>
+
         <Link href="/yukler" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
-          <Truck size={20} />
-          <span className="text-[9px] font-black uppercase tracking-tighter">İlanlar</span>
+          <Box size={18} />
+          <span className="text-[8px] font-black uppercase tracking-tighter">Yük Bul</span>
         </Link>
-        <div className="relative -mt-12 flex-1 flex justify-center">
+
+        <Link href="/araclar" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
+          <Truck size={18} />
+          <span className="text-[8px] font-black uppercase tracking-tighter">Araç Bul</span>
+        </Link>
+
+        <div className="relative -mt-10 flex-1 flex justify-center scale-90">
           <Link href="/ilan-ver">
-            <div className="w-16 h-16 bg-[#f58220] rounded-full flex items-center justify-center text-white shadow-xl shadow-orange-200 border-4 border-white active:scale-90 transition">
-              <PlusCircle size={28} />
+            <div className="w-14 h-14 bg-[#f58220] rounded-full flex flex-col items-center justify-center text-white shadow-xl shadow-orange-200 border-4 border-white active:scale-90 transition">
+              <PlusCircle size={20} />
+              <span className="text-[7px] font-bold uppercase mt-0.5">İlan Ver</span>
             </div>
           </Link>
         </div>
-        <Link href="#" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
-          <Building2 size={20} />
-          <span className="text-[9px] font-black uppercase tracking-tighter">Firmalar</span>
+
+        <Link href="/firmalar" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
+          <Building2 size={18} />
+          <span className="text-[8px] font-black uppercase tracking-tighter">Firmalar</span>
         </Link>
+
         <Link href="/profil" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
-          <User size={20} />
-          <span className="text-[9px] font-black uppercase tracking-tighter">Profil</span>
+          <User size={18} />
+          <span className="text-[8px] font-black uppercase tracking-tighter">Profil</span>
         </Link>
+
       </nav>
 
     </div>
