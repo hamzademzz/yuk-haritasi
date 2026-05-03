@@ -6,7 +6,7 @@ import {
   Home, PlusCircle, Bell, User, Search, Truck,
   CheckCircle, Zap, ShieldCheck, Headset, QrCode,
   UserPlus, SearchCode, Handshake, Lock, ArrowRight, LogOut, Building2,
-  Box, HardHat, Warehouse, Archive
+  Box, HardHat, Warehouse, Archive, Car
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -83,12 +83,14 @@ export default function HomePage() {
   ];
 
   const lojistikHizmetler = [
+    { baslik: "OTO KURTARICI", alt: "7/24 Yol Yardım", ikon: "🚨" },
+    { baslik: "OTO TAŞIYICI", alt: "Çoklu Araç Taşıma", ikon: "⛓️" },
     { baslik: "VİNÇ HİZMETLERİ", alt: "Vinç & Mobil Vinç", ikon: "🏗️" },
-    { baslik: "FORKLİFT HİZMETLERİ", alt: "Forklift & İstif Makinesi", ikon: "🚜" },
-    { baslik: "DEPOLAMA HİZMETLERİ", alt: "Depo & Antrepo Firmaları", ikon: "🏢" },
-    { baslik: "İŞ MAKİNALARI", alt: "Ekskavatör, Loader, Dozer", ikon: "👷" },
-    { baslik: "PAKETLEME HİZMETLERİ", alt: "Paketleme & Ambalajlama", ikon: "📦" },
-    { baslik: "PARSİYEL TAŞIMA", alt: "Parsiyel & Komple Taşıma", ikon: "🚛" },
+    { baslik: "FORKLİFT HİZMETLERİ", alt: "Forklift & İstif", ikon: "🚜" },
+    { baslik: "DEPOLAMA", alt: "Depo & Antrepo", ikon: "🏢" },
+    { baslik: "İŞ MAKİNALARI", alt: "Ekskavatör & Dozer", ikon: "👷" },
+    { baslik: "PAKETLEME", alt: "Ambalaj Hizmetleri", ikon: "📦" },
+    { baslik: "PARSİYEL TAŞIMA", alt: "Komple Taşıma", ikon: "🚛" },
   ];
 
   const adimlar = [
@@ -237,21 +239,27 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* LOJİSTİK HİZMETLER */}
+      {/* LOJİSTİK HİZMETLER - UPDATED WITH BLUE BACKGROUND AND NEW SERVICES */}
       <section className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex justify-between items-end mb-8">
           <div>
-            <h2 className="text-2xl font-black text-[#1e3a5f] italic tracking-tighter uppercase font-black">Lojistik Hizmetler</h2>
+            <h2 className="text-2xl font-black text-[#1e3a5f] italic tracking-tighter uppercase">Lojistik Hizmetler</h2>
             <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest leading-tight">İhtiyacınız olan tüm hizmetlere tek tıkla ulaşın.</p>
           </div>
           <Link href="/firmalar" className="text-[#f58220] font-bold text-[11px] flex items-center gap-1 uppercase tracking-wider hover:underline">Tüm Hizmetlere Göz At <ArrowRight size={14}/></Link>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           {lojistikHizmetler.map((hizmet, idx) => (
-            <div key={idx} className="bg-white border border-gray-100 rounded-2xl p-5 text-center hover:shadow-lg transition-all cursor-pointer group bg-gray-50/30">
-              <div className="text-4xl mb-4 group-hover:scale-110 transition-transform inline-block">{hizmet.ikon}</div>
-              <h3 className="text-[11px] font-black text-[#1e3a5f] uppercase leading-tight mb-2 italic tracking-tighter">{hizmet.baslik}</h3>
-              <p className="text-[9px] text-gray-400 font-bold leading-tight uppercase tracking-widest opacity-70">{hizmet.alt}</p>
+            <div key={idx} className="bg-[#1e3a5f] border border-[#2a4e7a] rounded-2xl p-4 text-center hover:bg-[#f58220] transition-all cursor-pointer group shadow-lg">
+              <div className="text-5xl mb-3 group-hover:scale-110 transition-transform inline-block drop-shadow-md">
+                {hizmet.ikon}
+              </div>
+              <h3 className="text-[10px] font-black text-white uppercase leading-tight mb-1 italic tracking-tighter group-hover:text-white">
+                {hizmet.baslik}
+              </h3>
+              <p className="text-[8px] text-gray-300 font-bold leading-tight uppercase tracking-widest opacity-80 group-hover:text-white">
+                {hizmet.alt}
+              </p>
             </div>
           ))}
         </div>
@@ -285,7 +293,7 @@ export default function HomePage() {
       {/* NASIL ÇALIŞIR? */}
       <section className="bg-gray-50 py-20 px-4">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-center text-3xl font-black text-[#1e3a5f] mb-16 italic uppercase tracking-tighter font-black">Nasıl Çalışır?</h2>
+          <h2 className="text-center text-3xl font-black text-[#1e3a5f] mb-16 italic uppercase tracking-tighter">Nasıl Çalışır?</h2>
           <div className="grid lg:grid-cols-3 gap-12 items-center">
             <div className="lg:col-span-2 grid md:grid-cols-3 gap-8">
               {adimlar.map((adim) => (
@@ -300,10 +308,10 @@ export default function HomePage() {
             </div>
             <div className="bg-[#1e3a5f] rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-between min-h-[300px]">
                <div>
-                 <h4 className="text-xl font-black mb-4 italic uppercase tracking-tighter font-black">Daha Fazlası İçin Üye Olun</h4>
+                 <h4 className="text-xl font-black mb-4 italic uppercase tracking-tighter">Daha Fazlası İçin Üye Olun</h4>
                  <p className="text-sm text-gray-400 mb-8 leading-relaxed font-medium">İletişim bilgilerini görüntüleyin, teklif verin, iş fırsatlarına ulaşın.</p>
                </div>
-               {!kullanici && <Link href="/register"><button className="w-full py-4 bg-[#f58220] text-white rounded-2xl font-black text-sm shadow-xl active:scale-95 transition italic uppercase tracking-tighter font-black">Ücretsiz Üye Ol</button></Link>}
+               {!kullanici && <Link href="/register"><button className="w-full py-4 bg-[#f58220] text-white rounded-2xl font-black text-sm shadow-xl active:scale-95 transition italic uppercase tracking-tighter">Ücretsiz Üye Ol</button></Link>}
                <Truck size={150} className="absolute -bottom-10 -right-10 opacity-10 rotate-12" />
             </div>
           </div>
