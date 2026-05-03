@@ -84,7 +84,7 @@ export default function HomePage() {
 
   const lojistikHizmetler = [
     { baslik: "OTO KURTARICI", alt: "7/24 Yol Yardım", ikon: "🚨" },
-    { baslik: "OTO TAŞIYICI", alt: "Çoklu Araç Taşıma", ikon: "⛓️" },
+    { baslik: "OTO TAŞIYICI", alt: "Evden Eve Taşıma", ikon: "⛓️" },
     { baslik: "VİNÇ HİZMETLERİ", alt: "Vinç & Mobil Vinç", ikon: "🏗️" },
     { baslik: "FORKLİFT HİZMETLERİ", alt: "Forklift & İstif", ikon: "🚜" },
     { baslik: "DEPOLAMA", alt: "Depo & Antrepo", ikon: "🏢" },
