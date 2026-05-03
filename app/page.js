@@ -5,7 +5,8 @@ import {
   Phone, MapPin, Menu, ChevronRight, 
   Home, PlusCircle, Bell, User, Search, Truck,
   CheckCircle, Zap, ShieldCheck, Headset, QrCode,
-  UserPlus, SearchCode, Handshake, Lock, ArrowRight, LogOut, Building2
+  UserPlus, SearchCode, Handshake, Lock, ArrowRight, LogOut, Building2,
+  Box, HardHat, Warehouse, Archive
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -30,14 +31,33 @@ export default function HomePage() {
 
   useEffect(() => {
     const kullaniciyiGetir = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setKullanici(user);
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user ?? null;
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name')
+          .eq('id', user.id)
+          .single();
+        
+        setKullanici({ ...user, profile_name: profile?.first_name });
+      } else {
+        setKullanici(null);
+      }
       setYukleniyor(false);
     };
+
     kullaniciyiGetir();
+
     const { data: authDinleyici } = supabase.auth.onAuthStateChange((event, session) => {
-      setKullanici(session?.user ?? null);
+      if (session?.user) {
+        kullaniciyiGetir();
+      } else {
+        setKullanici(null);
+      }
     });
+
     return () => authDinleyici.subscription.unsubscribe();
   }, []);
 
@@ -60,6 +80,15 @@ export default function HomePage() {
     { rota: "Mersin → İzmir", yuk: "Komple Yük", arac: "Tır / Tenteli", tarih: "24 Mayıs 2024" },
     { rota: "Gaziantep → Bursa", yuk: "Parça Yük", arac: "Kamyon", tarih: "25 Mayıs 2024" },
     { rota: "Konya → Samsun", yuk: "Komple Yük", arac: "Tır / Tenteli", tarih: "26 Mayıs 2024" },
+  ];
+
+  const lojistikHizmetler = [
+    { baslik: "VİNÇ HİZMETLERİ", alt: "Vinç & Mobil Vinç", ikon: "🏗️" },
+    { baslik: "FORKLİFT HİZMETLERİ", alt: "Forklift & İstif Makinesi", ikon: "🚜" },
+    { baslik: "DEPOLAMA HİZMETLERİ", alt: "Depo & Antrepo Firmaları", ikon: "🏢" },
+    { baslik: "İŞ MAKİNALARI", alt: "Ekskavatör, Loader, Dozer", ikon: "👷" },
+    { baslik: "PAKETLEME HİZMETLERİ", alt: "Paketleme & Ambalajlama", ikon: "📦" },
+    { baslik: "PARSİYEL TAŞIMA", alt: "Parsiyel & Komple Taşıma", ikon: "🚛" },
   ];
 
   const adimlar = [
@@ -99,10 +128,10 @@ export default function HomePage() {
               <>
                 {kullanici ? (
                   <div className="flex items-center gap-4">
-                    <div className="text-right hidden sm:block">
+                    <div className="text-right">
                       <p className="text-[10px] font-bold text-gray-400 uppercase leading-none">Hoşgeldin</p>
                       <p className="text-xs font-black text-[#1e3a5f]">
-                        {kullanici.user_metadata?.first_name || kullanici.email.split('@')[0]}
+                        {kullanici.profile_name || kullanici.email.split('@')[0]}
                       </p>
                     </div>
                     <button onClick={cikisYap} className="flex items-center gap-2 px-4 py-2 text-xs font-bold border border-red-100 rounded-lg text-red-500">
@@ -216,8 +245,31 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* YENİ EKLENEN: LOJİSTİK HİZMETLER */}
+      <section className="max-w-7xl mx-auto px-4 py-12">
+        <div className="flex justify-between items-end mb-8">
+          <div>
+            <h2 className="text-2xl font-black text-[#1e3a5f]">Lojistik Hizmetler</h2>
+            <p className="text-xs font-bold text-gray-400 mt-1">İhtiyacınız olan tüm lojistik hizmetlere tek tıkla ulaşın.</p>
+          </div>
+          <Link href="#" className="text-[#f58220] font-bold text-[11px] flex items-center gap-1 uppercase tracking-wider">Tüm Hizmetlere Göz At <ArrowRight size={14}/></Link>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {lojistikHizmetler.map((hizmet, idx) => (
+            <div key={idx} className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col items-center text-center hover:shadow-lg transition-all cursor-pointer group">
+              <div className="w-full aspect-video bg-gray-50 rounded-xl mb-4 flex items-center justify-center text-3xl group-hover:scale-105 transition-transform">
+                {hizmet.ikon}
+              </div>
+              <h3 className="text-[10px] font-black text-[#1e3a5f] mb-1 uppercase leading-tight">{hizmet.baslik}</h3>
+              <p className="text-[9px] font-bold text-gray-400">{hizmet.alt}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* GÜNCEL İLANLAR */}
-      <section className="max-w-7xl mx-auto px-4 py-16">
+      <section className="max-w-7xl mx-auto px-4 py-16 bg-white">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-black text-[#1e3a5f]">Güncel Yük İlanları</h2>
           <Link href="/yukler" className="text-[#f58220] font-bold text-sm flex items-center gap-1">Tüm İlanlara Göz At <ArrowRight size={16}/></Link>
@@ -311,7 +363,7 @@ export default function HomePage() {
         <p className="text-center text-[10px] text-gray-500 font-medium uppercase tracking-widest pb-8 lg:pb-0">© 2024 YükHaritası. Tüm hakları saklıdır.</p>
       </footer>
 
-      {/* MOBİL ALT NAVİGASYON (GÜNCELLENDİ: FİRMA REHBERİ EKLENDİ) */}
+      {/* MOBİL ALT NAVİGASYON */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 h-20 flex justify-between items-center z-[100] lg:hidden shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <Link href="/" className="flex flex-col items-center gap-1 text-[#1e3a5f] flex-1">
           <Home size={20} />
