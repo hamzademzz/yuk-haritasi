@@ -131,22 +131,31 @@ export default function HomePage() {
             {!yukleniyor && (
               <>
                 {kullanici ? (
-                  <div className="flex items-center gap-4">
-                    <Link href="/profil" className="text-right group">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase leading-none">Hoşgeldin</p>
-                      <p className="text-xs font-black text-[#1e3a5f] group-hover:text-[#f58220]">
-                        {kullanici.profile_name || kullanici.email.split('@')[0]}
-                      </p>
+                  <div className="flex items-center gap-2 lg:gap-4">
+                    <Link href="/profil" className="flex items-center gap-2 group">
+                      <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gray-100 rounded-full flex items-center justify-center text-[#1e3a5f] group-hover:bg-[#f58220] group-hover:text-white transition">
+                        <User size={18} />
+                      </div>
+                      <div className="text-right flex flex-col">
+                        <p className="text-[9px] lg:text-[10px] font-bold text-gray-400 uppercase leading-none">Profilim</p>
+                        <p className="text-[11px] lg:text-xs font-black text-[#1e3a5f] group-hover:text-[#f58220] truncate max-w-[70px] lg:max-w-none">
+                          {kullanici.profile_name || kullanici.email.split('@')[0]}
+                        </p>
+                      </div>
                     </Link>
-                    <button onClick={cikisYap} className="flex items-center gap-2 px-4 py-2 text-xs font-bold border border-red-100 rounded-lg text-red-500 hover:bg-red-50 transition">
-                      <LogOut size={14} /> Çıkış
+                    <button onClick={cikisYap} className="flex items-center justify-center p-2 lg:px-4 lg:py-2 text-xs font-bold border border-red-100 rounded-lg text-red-500 hover:bg-red-50 transition">
+                      <LogOut size={16} /> <span className="hidden lg:inline ml-2">Çıkış</span>
                     </button>
                   </div>
                 ) : (
-                  <>
-                    <Link href="/login"><button className="px-4 py-2 text-xs font-bold border rounded-lg text-[#1e3a5f]">Giriş Yap</button></Link>
-                    <Link href="/register"><button className="px-4 py-2 text-xs font-bold bg-[#f58220] text-white rounded-lg shadow-lg">Üye Ol</button></Link>
-                  </>
+                  <div className="flex items-center gap-1 lg:gap-2">
+                    <Link href="/login">
+                      <button className="px-2 lg:px-4 py-2 text-[11px] lg:text-xs font-bold border rounded-lg text-[#1e3a5f]">Giriş Yap</button>
+                    </Link>
+                    <Link href="/register">
+                      <button className="px-2 lg:px-4 py-2 text-[11px] lg:text-xs font-bold bg-[#f58220] text-white rounded-lg shadow-md lg:shadow-lg">Üye Ol</button>
+                    </Link>
+                  </div>
                 )}
               </>
             )}
@@ -239,7 +248,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* LOJİSTİK HİZMETLER - UPDATED WITH BLUE BACKGROUND AND NEW SERVICES */}
+      {/* LOJİSTİK HİZMETLER */}
       <section className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex justify-between items-end mb-8">
           <div>
@@ -355,15 +364,11 @@ export default function HomePage() {
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-1 h-20 flex justify-between items-center z-[100] lg:hidden shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <Link href="/" className="flex flex-col items-center gap-1 text-[#1e3a5f] flex-1">
           <Home size={18} />
-          <span className="text-[8px] font-black uppercase tracking-tighter font-black italic">Ana Sayfa</span>
+          <span className="text-[8px] font-black uppercase tracking-tighter italic">Ana Sayfa</span>
         </Link>
         <Link href="/yukler" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
           <Box size={18} />
-          <span className="text-[8px] font-black uppercase tracking-tighter font-black italic">Yük Bul</span>
-        </Link>
-        <Link href="/araclar" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
-          <Truck size={18} />
-          <span className="text-[8px] font-black uppercase tracking-tighter font-black italic">Araç Bul</span>
+          <span className="text-[8px] font-black uppercase tracking-tighter italic">Yük Ara</span>
         </Link>
         <div className="relative -mt-10 flex-1 flex justify-center scale-90">
           <Link href="/ilan-ver">
@@ -373,13 +378,13 @@ export default function HomePage() {
             </div>
           </Link>
         </div>
-        <Link href="/firmalar" className={`flex flex-col items-center gap-1 flex-1 ${router.asPath === '/firmalar' ? 'text-[#1e3a5f]' : 'text-gray-400'}`}>
-          <Building2 size={18} />
-          <span className="text-[8px] font-black uppercase tracking-tighter">Firmalar</span>
+        <Link href="/araclar" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
+          <Truck size={18} />
+          <span className="text-[8px] font-black uppercase tracking-tighter italic">Araç Bul</span>
         </Link>
-        <Link href="/profil" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
-          <User size={18} />
-          <span className="text-[8px] font-black uppercase tracking-tighter font-black italic">Profil</span>
+        <Link href="/firmalar" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
+          <Building2 size={18} />
+          <span className="text-[8px] font-black uppercase tracking-tighter italic">Firmalar</span>
         </Link>
       </nav>
 
