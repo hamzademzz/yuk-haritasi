@@ -112,11 +112,14 @@ export default function HomePage() {
       {/* HEADER */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 lg:h-20 flex justify-between items-center">
+          
+          {/* LOGO */}
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex flex-col">
+            <Link href="/" className="flex items-center">
               <span className="text-2xl font-black tracking-tighter text-[#1e3a5f]">Yük<span className="text-[#f58220]">Haritası</span></span>
-              <span className="text-[10px] font-bold text-gray-400 -mt-1 uppercase tracking-widest">Türkiye'nin Yük Haritası</span>
             </Link>
+            
+            {/* DESKTOP NAV */}
             <nav className="hidden lg:flex items-center gap-6 text-[13px] font-bold text-gray-600">
               <Link href="/yukler" className="hover:text-[#f58220] transition">Yük İlanları</Link>
               <Link href="/araclar" className="hover:text-[#f58220] transition">Araç İlanları</Link>
@@ -127,37 +130,30 @@ export default function HomePage() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-2">
-            {!yukleniyor && (
-              <>
-                {kullanici ? (
-                  <div className="flex items-center gap-2 lg:gap-4">
-                    <Link href="/profil" className="flex items-center gap-2 group">
-                      <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gray-100 rounded-full flex items-center justify-center text-[#1e3a5f] group-hover:bg-[#f58220] group-hover:text-white transition">
-                        <User size={18} />
-                      </div>
-                      <div className="text-right flex flex-col">
-                        <p className="text-[9px] lg:text-[10px] font-bold text-gray-400 uppercase leading-none">Profilim</p>
-                        <p className="text-[11px] lg:text-xs font-black text-[#1e3a5f] group-hover:text-[#f58220] truncate max-w-[70px] lg:max-w-none">
-                          {kullanici.profile_name || kullanici.email.split('@')[0]}
-                        </p>
-                      </div>
-                    </Link>
-                    <button onClick={cikisYap} className="flex items-center justify-center p-2 lg:px-4 lg:py-2 text-xs font-bold border border-red-100 rounded-lg text-red-500 hover:bg-red-50 transition">
-                      <LogOut size={16} /> <span className="hidden lg:inline ml-2">Çıkış</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 lg:gap-2">
-                    <Link href="/login">
-                      <button className="px-2 lg:px-4 py-2 text-[11px] lg:text-xs font-bold border rounded-lg text-[#1e3a5f]">Giriş Yap</button>
-                    </Link>
-                    <Link href="/register">
-                      <button className="px-2 lg:px-4 py-2 text-[11px] lg:text-xs font-bold bg-[#f58220] text-white rounded-lg shadow-md lg:shadow-lg">Üye Ol</button>
-                    </Link>
-                  </div>
-                )}
-              </>
+          {/* RIGHT SIDE: AUTH & PROFIL */}
+          <div className="flex items-center gap-3 lg:gap-6">
+            
+            {/* Guest Buttons (Visible when not logged in) */}
+            {!kullanici && (
+              <div className="hidden sm:flex items-center gap-2">
+                <Link href="/login" className="px-4 py-2 text-xs font-bold border border-gray-200 rounded-lg text-[#1e3a5f] hover:bg-gray-50 transition">Giriş Yap</Link>
+                <Link href="/register" className="px-4 py-2 text-xs font-bold bg-[#f58220] text-white rounded-lg shadow hover:bg-[#e4761a] transition">Üye Ol</Link>
+              </div>
+            )}
+
+            {/* Profile Link (Always Visible) */}
+            <Link href={kullanici ? "/profil" : "/login"} className="flex flex-col items-center group">
+              <div className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 group-hover:text-[#f58220] transition">
+                <User size={18} />
+              </div>
+              <span className="text-[10px] font-bold text-gray-400 group-hover:text-[#f58220] mt-0.5 uppercase tracking-tighter">Profil</span>
+            </Link>
+
+            {/* Logout Button (Visible when logged in) */}
+            {kullanici && (
+              <button onClick={cikisYap} className="px-3 py-1.5 text-xs font-bold text-red-500 border border-red-100 rounded-lg hover:bg-red-50 transition hidden sm:block">
+                Çıkış
+              </button>
             )}
           </div>
         </div>
@@ -360,7 +356,7 @@ export default function HomePage() {
         <p className="text-center text-[10px] text-gray-500 font-medium uppercase tracking-widest pb-8 lg:pb-0">© 2024 YükHaritası. Tüm hakları saklıdır.</p>
       </footer>
 
-      {/* MOBİL ALT NAVİGASYON */}
+      {/* MOBİL ALT NAVİGASYON (Order: Ana Sayfa, Yük Ara, İlan Ver, Araç Bul, Firmalar) */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-1 h-20 flex justify-between items-center z-[100] lg:hidden shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <Link href="/" className="flex flex-col items-center gap-1 text-[#1e3a5f] flex-1">
           <Home size={18} />
