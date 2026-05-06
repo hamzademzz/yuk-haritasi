@@ -1,158 +1,151 @@
 "use client";
-import React, { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Truck, MapPin, Calendar, Weight, User, Phone, Star, ArrowLeft } from 'lucide-react';
+import React, { Suspense, useEffect, useState, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Truck, MapPin, Calendar, Weight, User, Phone, ArrowLeft, Search, Navigation } from 'lucide-react';
 import Link from 'next/link';
+import { supabase } from '../../lib/supabase'; 
 
-// 1. Create a separate component for the list logic
 function YukListesi() {
   const searchParams = useSearchParams();
-  const nereden = searchParams.get('nereden');
-  const nereye = searchParams.get('nereye');
+  const router = useRouter();
+  
+  const [neredenInput, setNeredenInput] = useState(searchParams.get('nereden') || '');
+  const [nereyeInput, setNereyeInput] = useState(searchParams.get('nereye') || '');
+  const [yukler, setYukler] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const sahteYukler = [
-    { 
-      id: 1, 
-      baslik: "Paletli Gıda Ürünü", 
-      nereden: "Ankara", 
-      nereye: "İstanbul", 
-      agirlik: "20 Ton", 
-      arac: "Tır", 
-      tarih: "20/03/2026",
-      mesafe: "450 km",
-      sahibi: "Nami Sona",
-      konum: "Ostim, Ankara",
-      puan: 4
-    },
-    { 
-      id: 2, 
-      baslik: "İnşaat Malzemesi", 
-      nereden: "İzmir", 
-      nereye: "Bursa", 
-      agirlik: "15 Ton", 
-      arac: "Kamyon", 
-      tarih: "22/03/2026",
-      mesafe: "340 km",
-      sahibi: "Ahmet Lojistik",
-      konum: "Bornova, İzmir",
-      puan: 5
-    }
-  ];
+  const fetchYukler = useCallback(async () => {
+    setLoading(true);
+    let query = supabase.from('yuk_ilanlari').select('*').eq('is_active', true);
+    if (searchParams.get('nereden')) query = query.ilike('nereden', `%${searchParams.get('nereden')}%`);
+    if (searchParams.get('nereye')) query = query.ilike('nereye', `%${searchParams.get('nereye')}%`);
+    const { data, error } = await query.order('olusturulma_tarihi', { ascending: false });
+    if (!error) setYukler(data);
+    setLoading(false);
+  }, [searchParams]);
+
+  useEffect(() => { fetchYukler(); }, [fetchYukler]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (neredenInput) params.set('nereden', neredenInput);
+    if (nereyeInput) params.set('nereye', nereyeInput);
+    router.push(`/yukler?${params.toString()}`);
+  };
 
   return (
-    <>
-      {/* Üst Bilgi Paneli */}
-      <div className="bg-[#1e3a5f] text-white pt-10 pb-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <Link href="/" className="flex items-center gap-2 text-sm text-gray-300 mb-6 hover:text-white transition">
-            <ArrowLeft size={16}/> Geri Dön
+    <div style={{ backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+      {/* ENTERPRISE HEADER */}
+      <div style={{ backgroundColor: '#1e3a5f', paddingTop: '3rem', paddingBottom: '6rem', paddingLeft: '1rem', paddingRight: '1rem' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <Link href="/" style={{ color: '#ffffff', textDecoration: 'none', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.1em', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+            <ArrowLeft size={16}/> ANA SAYFAYA DÖN
           </Link>
-          <h1 className="text-3xl font-black italic uppercase tracking-tighter">
-            {nereden && nereye ? `${nereden} → ${nereye} Yükleri` : "Güncel Yük İlanları"}
+          
+          <h1 style={{ color: '#ffffff', fontSize: '2.5rem', fontWeight: '900', margin: 0, fontStyle: 'italic', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+            GÜNCEL YÜK İLANLARI
           </h1>
-          <p className="text-orange-400 font-bold mt-2">Toplam {sahteYukler.length} ilan bulundu.</p>
+          <p style={{ color: '#f58220', fontWeight: 'bold', marginTop: '0.5rem', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.1em' }}>
+            SİSTEMDE {yukler.length} AKTİF İLAN BULUNUYOR
+          </p>
         </div>
       </div>
 
-      {/* İlan Listesi */}
-      <div className="max-w-5xl mx-auto px-4 -mt-10">
-        <div className="grid gap-6">
-          {sahteYukler.map((yuk) => (
-            <div key={yuk.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row">
-              <div className="p-8 flex-1 border-r border-gray-50">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <span className="text-[10px] font-black bg-orange-100 text-[#f58220] px-3 py-1 rounded-full uppercase">Yük Detayları</span>
-                    <h3 className="text-xl font-black text-[#1e3a5f] mt-2 uppercase italic">{yuk.baslik}</h3>
+      <div style={{ maxWidth: '1100px', margin: '-3rem auto 0', padding: '0 1rem 5rem' }}>
+        {/* SEARCH BAR - CLEAN & BOLD */}
+        <form onSubmit={handleSearch} style={{ backgroundColor: '#ffffff', padding: '0.75rem', borderRadius: '1rem', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'row', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+          <input 
+            style={{ flex: 1, padding: '1rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '1rem', outline: 'none' }}
+            type="text" placeholder="Nereden?" value={neredenInput} onChange={(e) => setNeredenInput(e.target.value)}
+          />
+          <input 
+            style={{ flex: 1, padding: '1rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '1rem', outline: 'none' }}
+            type="text" placeholder="Nereye?" value={nereyeInput} onChange={(e) => setNereyeInput(e.target.value)}
+          />
+          <button type="submit" style={{ backgroundColor: '#f58220', color: '#ffffff', padding: '1rem 2.5rem', borderRadius: '0.75rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '1rem' }}>BUL</button>
+        </form>
+
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '5rem', fontWeight: 'bold', color: '#1e3a5f' }}>VERİLER ÇEKİLİYOR...</div>
+        ) : (
+          <div style={{ display: 'grid', gap: '1.5rem' }}>
+            {yukler.map((yuk) => (
+              <div key={yuk.id} style={{ backgroundColor: '#ffffff', borderRadius: '1.5rem', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+                
+                {/* CONTENT AREA */}
+                <div style={{ padding: '2rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                    <div>
+                      <span style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', fontSize: '0.65rem', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.05em', border: '1px solid #e2e8f0' }}>
+                        {yuk.yuk_turu || "GENEL YÜK"}
+                      </span>
+                      <h3 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#000000', margin: '0.75rem 0 0', textTransform: 'uppercase', fontStyle: 'italic', lineHeight: 1 }}>
+                        {yuk.nereden} <span style={{ color: '#f58220' }}>➔</span> {yuk.nereye}
+                      </h3>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Mesafe</p>
-                    <p className="font-black text-[#1e3a5f]">{yuk.mesafe}</p>
+
+                  {/* DETAILS GRID */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1.5rem', backgroundColor: '#f8fafc', padding: '1.5rem', borderRadius: '1rem', border: '1px solid #f1f5f9' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <Weight size={24} style={{ color: '#64748b' }} />
+                      <div>
+                        <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase' }}>AĞIRLIK</p>
+                        <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', color: '#000000' }}>{yuk.agirlik_ton} TON</p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <Truck size={24} style={{ color: '#64748b' }} />
+                      <div>
+                        <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase' }}>ARAÇ TİPİ</p>
+                        <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', color: '#000000' }}>{yuk.arac_tipi_gereksinimi || "STANDART"}</p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <Calendar size={24} style={{ color: '#64748b' }} />
+                      <div>
+                        <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase' }}>YÜKLEME TARİHİ</p>
+                        <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', color: '#000000' }}>
+                          {yuk.yukleme_tarihi ? new Date(yuk.yukleme_tarihi).toLocaleDateString('tr-TR') : 'ACİL'}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  <div className="flex items-center gap-3 text-gray-900">
-                    <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-[#1e3a5f]">
-                      <Weight size={20}/>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase">Ağırlık</p>
-                      <p className="text-sm font-black italic">{yuk.agirlik}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 text-gray-900">
-                    <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-[#1e3a5f]">
-                      <Truck size={20}/>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase">Araç</p>
-                      <p className="text-sm font-black italic">{yuk.arac}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 text-gray-900">
-                    <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-[#1e3a5f]">
-                      <Calendar size={20}/>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase">Tarih</p>
-                      <p className="text-sm font-black italic">{yuk.tarih}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8 flex items-center gap-4 bg-gray-50 p-4 rounded-2xl">
-                   <div className="flex-1">
-                      <p className="text-[10px] text-gray-400 font-bold uppercase">Güzergah</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="font-black text-[#1e3a5f]">{yuk.nereden}</span>
-                        <div className="h-[2px] flex-1 bg-gray-200 relative mx-2">
-                           <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-orange-400"></div>
-                        </div>
-                        <span className="font-black text-[#1e3a5f]">{yuk.nereye}</span>
+                {/* BOTTOM CONTACT SECTION - SLEEK & MODERN */}
+                <div style={{ borderTop: '1px solid #f1f5f9', padding: '2rem', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fcfcfc', flexWrap: 'wrap', gap: '1.5rem' }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div style={{ width: '3.5rem', height: '3.5rem', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1e3a5f', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                        <User size={24} />
+                      </div>
+                      <div>
+                        <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: '900', color: '#000000', textTransform: 'uppercase' }}>{yuk.ilan_sahibi_ad_soyad || "İSİMSİZ"}</p>
+                        <p style={{ margin: 0, fontSize: '0.7rem', color: '#94a3b8', fontWeight: 'bold', textTransform: 'uppercase' }}>DOĞRULANMIŞ İLAN SAHİBİ</p>
                       </div>
                    </div>
+
+                   <a 
+                    href={`tel:${yuk.telefon_numarasi}`}
+                    style={{ backgroundColor: '#22c55e', color: '#ffffff', textDecoration: 'none', padding: '1.25rem 3rem', borderRadius: '1rem', fontWeight: '900', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', transition: 'transform 0.2s', boxShadow: '0 10px 15px -3px rgba(34, 197, 94, 0.2)' }}
+                   >
+                    <Phone size={20} fill="white" /> ŞİMDİ ARA
+                   </a>
                 </div>
               </div>
-
-              <div className="bg-gray-50/50 p-8 md:w-80 border-t md:border-t-0 md:border-l border-gray-100 flex flex-col justify-between">
-                <div>
-                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 text-gray-900">İlan Sahibi</h4>
-                  <div className="flex items-center gap-3 mb-4 text-gray-900">
-                    <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center text-[#1e3a5f] border-2 border-white">
-                      <User size={24}/>
-                    </div>
-                    <div>
-                      <p className="font-black leading-tight">{yuk.sahibi}</p>
-                      <div className="flex text-orange-400 gap-0.5 mt-1">
-                        {[...Array(5)].map((_, i) => <Star key={i} size={10} fill={i < yuk.puan ? "currentColor" : "none"} />)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
-                       <MapPin size={14}/> {yuk.konum}
-                  </div>
-                </div>
-
-                <button className="w-full mt-8 py-4 bg-[#22c55e] text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg hover:brightness-110 active:scale-95 transition-all">
-                  <Phone size={18}/> İLAN SAHİBİNİ ARA
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 
-// 2. Wrap everything in Suspense in the main export
 export default function YuklerPage() {
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <Suspense fallback={<div className="p-20 text-center font-bold text-[#1e3a5f]">Yükler Yükleniyor...</div>}>
-        <YukListesi />
-      </Suspense>
-    </div>
+    <Suspense fallback={null}>
+      <YukListesi />
+    </Suspense>
   );
 }
