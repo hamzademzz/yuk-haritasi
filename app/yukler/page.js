@@ -59,6 +59,10 @@ function YukListesi() {
 
   return (
     <div style={{ backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+      <style>{`
+        input::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(0.2); }
+      `}</style>
+
       {/* ENTERPRISE HEADER */}
       <div style={{ backgroundColor: '#1e3a5f', paddingTop: '3rem', paddingBottom: '6rem', paddingLeft: '1rem', paddingRight: '1rem' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
@@ -94,8 +98,9 @@ function YukListesi() {
           </div>
 
           <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
+             <Calendar size={18} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#1e3a5f', pointerEvents: 'none', zIndex: 1 }} />
              <input 
-              style={{ width: '100%', padding: '1rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '0.9rem', outline: 'none' }}
+              style={{ width: '100%', padding: '1rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '0.9rem', outline: 'none', position: 'relative' }}
               type="date" value={tarihInput} onChange={(e) => setTarihInput(e.target.value)}
             />
           </div>

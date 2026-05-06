@@ -18,7 +18,7 @@ import { supabase } from '../../lib/supabase';
 
 export default function IlanVerPage() {
   const router = useRouter();
-  const [step, setStep] = useState('selection'); // selection, form, success
+  const [step, setStep] = useState('selection'); 
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -40,13 +40,11 @@ export default function IlanVerPage() {
     try {
       const { error } = await supabase
         .from('yuk_ilanlari')
-        .insert([
-          { 
-            ...formData, 
-            agirlik_ton: parseFloat(formData.agirlik_ton),
-            olusturulma_tarihi: new Date().toISOString()
-          }
-        ]);
+        .insert([{ 
+          ...formData, 
+          agirlik_ton: parseFloat(formData.agirlik_ton),
+          olusturulma_tarihi: new Date().toISOString()
+        }]);
       if (error) throw error;
       setStep('success');
     } catch (error) {
@@ -56,33 +54,32 @@ export default function IlanVerPage() {
     }
   };
 
-  // Visibility Styles
   const labelStyle = {
     display: 'block',
-    fontSize: '0.75rem',
+    fontSize: '0.7rem', // Yazı boyutu küçültüldü (taşmayı önlemek için)
     fontWeight: '900',
     color: '#475569',
-    marginBottom: '0.6rem',
+    marginBottom: '0.5rem',
     textTransform: 'uppercase',
     letterSpacing: '0.05em'
   };
 
   const inputStyle = {
     width: '100%',
-    padding: '1rem',
+    padding: '0.75rem',
     borderRadius: '0.75rem',
-    border: '1px solid #cbd5e1',
-    backgroundColor: '#ffffff', // Pure white for better contrast
-    fontSize: '1rem',
+    border: '2px solid #cbd5e1', // Kenarlıklar daha belirgin
+    backgroundColor: '#ffffff',
+    fontSize: '0.9rem', // Mobil uyumlu font boyutu
     fontWeight: '700', 
-    color: '#000000', // Visible Black Text
+    color: '#000000', 
     outline: 'none',
     boxSizing: 'border-box'
   };
 
   const inputWithIconStyle = {
     ...inputStyle,
-    paddingLeft: '3rem'
+    paddingLeft: '2.75rem'
   };
 
   const iconInsideStyle = {
@@ -143,7 +140,6 @@ export default function IlanVerPage() {
         <div style={{ backgroundColor: '#fff', padding: '4rem 2rem', borderRadius: '2rem', textAlign: 'center', maxWidth: '500px' }}>
           <CheckCircle2 size={70} color="#22c55e" style={{ margin: '0 auto 1.5rem' }} />
           <h2 style={{ fontWeight: '900', color: '#1e3a5f', fontSize: '2rem' }}>İLAN YAYINLANDI!</h2>
-          <p style={{ color: '#64748b', margin: '1rem 0 2rem' }}>İlanınız sisteme başarıyla kaydedildi ve tüm sürücülere açık hale getirildi.</p>
           <button onClick={() => router.push('/yukler')} style={{ backgroundColor: '#1e3a5f', color: '#fff', padding: '1.25rem', borderRadius: '1rem', border: 'none', fontWeight: '900', cursor: 'pointer', width: '100%' }}>İLANLARI LİSTELE</button>
         </div>
       </div>
@@ -153,8 +149,12 @@ export default function IlanVerPage() {
   return (
     <div style={{ backgroundColor: '#f1f5f9', minHeight: '100vh' }}>
        <style>{`
-        input::placeholder { color: #94a3b8 !important; font-weight: 500; }
+        input::placeholder { color: #94a3b8 !important; font-weight: 500; font-size: 0.8rem; }
         input::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(0.2); }
+        @media (max-width: 600px) {
+          .mobile-grid { grid-template-columns: 1fr !important; }
+          .form-padding { padding: 1.5rem !important; }
+        }
       `}</style>
 
       <div style={{ backgroundColor: '#1e3a5f', padding: '3rem 1rem 6rem' }}>
@@ -167,9 +167,8 @@ export default function IlanVerPage() {
       </div>
 
       <div style={{ maxWidth: '850px', margin: '-4rem auto 0', padding: '0 1rem 5rem' }}>
-        <form onSubmit={handleSubmit} style={{ backgroundColor: '#ffffff', borderRadius: '1.5rem', padding: '2.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)' }}>
+        <form onSubmit={handleSubmit} className="form-padding" style={{ backgroundColor: '#ffffff', borderRadius: '1.5rem', padding: '2.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)' }}>
           
-          {/* GRUP 1 */}
           <div style={{ marginBottom: '2.5rem' }}>
             <h3 style={{ color: '#f58220', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem', borderBottom: '2px solid #f8fafc', paddingBottom: '0.75rem' }}>
               <Package size={22} /> YÜK VE ARAÇ DETAYLARI
@@ -177,29 +176,32 @@ export default function IlanVerPage() {
             <div style={{ display: 'grid', gap: '1.5rem' }}>
               <div>
                 <label style={labelStyle}>YÜKÜN CİNSİ / TÜRÜ</label>
-                <input required style={inputStyle} placeholder="Örn: Evden Eve, Paletli, Demir, Gıda..." value={formData.yuk_turu} onChange={(e) => setFormData({...formData, yuk_turu: e.target.value})} />
+                <input required style={inputStyle} placeholder="Örn: Evden Eve, Paletli, Demir..." value={formData.yuk_turu} onChange={(e) => setFormData({...formData, yuk_turu: e.target.value})} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div style={{ position: 'relative' }}>
                   <label style={labelStyle}>AĞIRLIK (TON)</label>
-                  <Weight style={{...iconInsideStyle, top: '70%'}} size={18} />
-                  <input required type="number" step="0.1" style={inputWithIconStyle} placeholder="0.0" value={formData.agirlik_ton} onChange={(e) => setFormData({...formData, agirlik_ton: e.target.value})} />
+                  <div style={{ position: 'relative' }}>
+                    <Weight style={iconInsideStyle} size={18} />
+                    <input required type="number" step="0.1" style={inputWithIconStyle} placeholder="0.0" value={formData.agirlik_ton} onChange={(e) => setFormData({...formData, agirlik_ton: e.target.value})} />
+                  </div>
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <label style={labelStyle}>İHTİYAÇ DUYULAN ARAÇ</label>
-                  <Truck style={{...iconInsideStyle, top: '70%'}} size={18} />
-                  <input style={inputWithIconStyle} placeholder="Örn: Tır, Kamyon, Panelvan..." value={formData.arac_tipi_gereksinimi} onChange={(e) => setFormData({...formData, arac_tipi_gereksinimi: e.target.value})} />
+                  <label style={labelStyle}>İHTİYAÇ ARAÇ</label>
+                  <div style={{ position: 'relative' }}>
+                    <Truck style={iconInsideStyle} size={18} />
+                    <input style={inputWithIconStyle} placeholder="Tır, Kamyon..." value={formData.arac_tipi_gereksinimi} onChange={(e) => setFormData({...formData, arac_tipi_gereksinimi: e.target.value})} />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* GRUP 2 */}
           <div style={{ marginBottom: '2.5rem' }}>
             <h3 style={{ color: '#f58220', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem', borderBottom: '2px solid #f8fafc', paddingBottom: '0.75rem' }}>
               <Navigation size={22} /> ROTA VE TAKVİM
             </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div className="mobile-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
                 <label style={labelStyle}>KALKIŞ NOKTASI</label>
                 <input required style={inputStyle} placeholder="Şehir ve İlçe" value={formData.nereden} onChange={(e) => setFormData({...formData, nereden: e.target.value})} />
@@ -208,31 +210,40 @@ export default function IlanVerPage() {
                 <label style={labelStyle}>VARIŞ NOKTASI</label>
                 <input required style={inputStyle} placeholder="Şehir ve İlçe" value={formData.nereye} onChange={(e) => setFormData({...formData, nereye: e.target.value})} />
               </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
               <div>
                 <label style={labelStyle}>YÜKLEME TARİHİ</label>
-                <input required type="date" style={inputStyle} value={formData.yukleme_tarihi} onChange={(e) => setFormData({...formData, yukleme_tarihi: e.target.value})} />
+                <div style={{ position: 'relative' }}>
+                   <Calendar style={{ ...iconInsideStyle, left: 'auto', right: '10px', color: '#cbd5e1' }} size={18} />
+                   <input required type="date" style={{...inputStyle, paddingRight: '2.5rem'}} value={formData.yukleme_tarihi} onChange={(e) => setFormData({...formData, yukleme_tarihi: e.target.value})} />
+                </div>
               </div>
               <div>
                 <label style={labelStyle}>BOŞALTMA TARİHİ</label>
-                <input type="date" style={inputStyle} value={formData.bosaltma_tarihi} onChange={(e) => setFormData({...formData, bosaltma_tarihi: e.target.value})} />
+                <div style={{ position: 'relative' }}>
+                   <Calendar style={{ ...iconInsideStyle, left: 'auto', right: '10px', color: '#cbd5e1' }} size={18} />
+                   <input type="date" style={{...inputStyle, paddingRight: '2.5rem'}} value={formData.bosaltma_tarihi} onChange={(e) => setFormData({...formData, bosaltma_tarihi: e.target.value})} />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* GRUP 3 */}
           <div style={{ marginBottom: '2.5rem' }}>
             <h3 style={{ color: '#f58220', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem', borderBottom: '2px solid #f8fafc', paddingBottom: '0.75rem' }}>
               <User size={22} /> İLETİŞİM KANALLARI
             </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div className="mobile-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
                 <label style={labelStyle}>YETKİLİ AD SOYAD</label>
                 <input required style={inputStyle} placeholder="Adınız Soyadınız" value={formData.ilan_sahibi_ad_soyad} onChange={(e) => setFormData({...formData, ilan_sahibi_ad_soyad: e.target.value})} />
               </div>
               <div style={{ position: 'relative' }}>
                 <label style={labelStyle}>TELEFON NUMARASI</label>
-                <Phone style={{...iconInsideStyle, top: '70%'}} size={18} />
-                <input required type="tel" style={inputWithIconStyle} placeholder="05XX XXX XX XX" value={formData.telefon_numarasi} onChange={(e) => setFormData({...formData, telefon_numarasi: e.target.value})} />
+                <div style={{ position: 'relative' }}>
+                  <Phone style={iconInsideStyle} size={18} />
+                  <input required type="tel" style={inputWithIconStyle} placeholder="05XX XXX XX XX" value={formData.telefon_numarasi} onChange={(e) => setFormData({...formData, telefon_numarasi: e.target.value})} />
+                </div>
               </div>
             </div>
           </div>
@@ -244,7 +255,7 @@ export default function IlanVerPage() {
               width: '100%', 
               backgroundColor: '#22c55e', 
               color: '#ffffff', 
-              padding: '1.5rem', 
+              padding: '1.25rem', 
               borderRadius: '1rem', 
               border: 'none', 
               fontSize: '1.25rem', 
