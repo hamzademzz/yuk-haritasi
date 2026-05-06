@@ -57,12 +57,7 @@ function YukListesi() {
   return (
     <div style={{ backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: 'sans-serif' }}>
       <style>{`
-        input::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(0.2); margin-right: 2px; }
-        @media (max-width: 600px) {
-          .search-form { flex-direction: column !important; }
-          .input-container { width: 100% !important; min-width: 100% !important; }
-          .search-button { width: 100% !important; margin-top: 5px; }
-        }
+        input::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(0.2); }
       `}</style>
 
       {/* ENTERPRISE HEADER */}
@@ -82,38 +77,39 @@ function YukListesi() {
       </div>
 
       <div style={{ maxWidth: '1100px', margin: '-3rem auto 0', padding: '0 1rem 5rem' }}>
-        {/* CORRECTED SEARCH BAR */}
-        <form onSubmit={handleSearch} className="search-form" style={{ backgroundColor: '#ffffff', padding: '1rem', borderRadius: '1rem', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'row', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem', alignItems: 'center' }}>
+        {/* SEARCH BAR */}
+        <form onSubmit={handleSearch} style={{ backgroundColor: '#ffffff', padding: '1rem', borderRadius: '1rem', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'row', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem', alignItems: 'center' }}>
           
-          <div className="input-container" style={{ flex: 2, minWidth: '200px' }}>
+          <div style={{ flex: 1, minWidth: '200px' }}>
             <input 
               style={{ width: '100%', padding: '1rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '0.9rem', outline: 'none' }}
               type="text" placeholder="Nereden?" value={neredenInput} onChange={(e) => setNeredenInput(e.target.value)}
             />
           </div>
 
-          <div className="input-container" style={{ flex: 2, minWidth: '200px' }}>
+          <div style={{ flex: 1, minWidth: '200px' }}>
             <input 
               style={{ width: '100%', padding: '1rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '0.9rem', outline: 'none' }}
               type="text" placeholder="Nereye?" value={nereyeInput} onChange={(e) => setNereyeInput(e.target.value)}
             />
           </div>
 
-          {/* Corrected Date Container */}
-          <div className="input-container" style={{ flex: 1.5, minWidth: '180px', position: 'relative', display: 'flex', alignItems: 'center' }}>
-             <Calendar size={18} style={{ position: 'absolute', left: '0.8rem', color: '#1e3a5f', zIndex: 2, pointerEvents: 'none' }} />
-             <input 
-              style={{ width: '100%', padding: '1rem 0.5rem 1rem 2.5rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '0.9rem', outline: 'none' }}
-              type="date" value={tarihInput} onChange={(e) => setTarihInput(e.target.value)}
-            />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '200px' }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+               <Calendar size={18} style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#1e3a5f', pointerEvents: 'none', zIndex: 1 }} />
+               <input 
+                style={{ width: '100%', padding: '1rem 0.5rem 1rem 2.8rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '0.9rem', outline: 'none' }}
+                type="date" value={tarihInput} onChange={(e) => setTarihInput(e.target.value)}
+              />
+            </div>
             {tarihInput && (
-              <button type="button" onClick={() => setTarihInput('')} style={{ position: 'absolute', right: '2.5rem', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
-                <X size={16} />
+              <button type="button" onClick={() => setTarihInput('')} style={{ background: '#fee2e2', border: 'none', padding: '0.8rem', borderRadius: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
+                <X size={20} />
               </button>
             )}
           </div>
 
-          <button type="submit" className="search-button" style={{ backgroundColor: '#f58220', color: '#ffffff', padding: '1rem 2rem', borderRadius: '0.75rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minWidth: '100px' }}>
+          <button type="submit" style={{ backgroundColor: '#f58220', color: '#ffffff', padding: '1rem 2.5rem', borderRadius: '0.75rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
             <Search size={18} /> BUL
           </button>
         </form>
@@ -188,7 +184,7 @@ function YukListesi() {
             ) : (
               <div style={{ textAlign: 'center', padding: '5rem', backgroundColor: '#fff', borderRadius: '1.5rem', border: '1px dashed #cbd5e1' }}>
                 <p style={{ color: '#64748b', fontWeight: 'bold' }}>Aradığınız kriterlere uygun ilan bulunamadı.</p>
-                <button onClick={() => {setNeredenInput(''); setNereyeInput(''); setNereyeInput(''); setTarihInput(''); router.push('/yukler')}} style={{ background: 'none', border: 'none', color: '#f58220', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}>
+                <button onClick={() => {setNeredenInput(''); setNereyeInput(''); setTarihInput(''); router.push('/yukler')}} style={{ background: 'none', border: 'none', color: '#f58220', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}>
                   Tüm ilanları göster
                 </button>
               </div>

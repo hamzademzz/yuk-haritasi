@@ -212,27 +212,30 @@ export default function IlanVerPage() {
                 <input required style={inputStyle} placeholder="Şehir ve İlçe" value={formData.nereye} onChange={(e) => setFormData({...formData, nereye: e.target.value})} />
               </div>
             </div>
-            {/* CORRECTED DATE BOXES */}
             <div className="mobile-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
-              <div style={{ position: 'relative' }}>
+              <div>
                 <label style={labelStyle}>YÜKLEME TARİHİ</label>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                   <Calendar style={{ position: 'absolute', left: '0.8rem', color: '#1e3a5f', zIndex: 2, pointerEvents: 'none' }} size={16} />
-                   <input required type="date" style={{...inputStyle, paddingLeft: '2.5rem', paddingRight: '2.5rem'}} value={formData.yukleme_tarihi} onChange={(e) => setFormData({...formData, yukleme_tarihi: e.target.value})} />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                   <div style={{ position: 'relative', flex: 1 }}>
+                     <Calendar style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#1e3a5f', pointerEvents: 'none', zIndex: 1 }} size={16} />
+                     <input required type="date" style={{...inputStyle, paddingLeft: '2.8rem'}} value={formData.yukleme_tarihi} onChange={(e) => setFormData({...formData, yukleme_tarihi: e.target.value})} />
+                   </div>
                    {formData.yukleme_tarihi && (
-                     <button type="button" onClick={() => setFormData({...formData, yukleme_tarihi: ''})} style={{ position: 'absolute', right: '2.2rem', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                     <button type="button" onClick={() => setFormData({...formData, yukleme_tarihi: ''})} style={{ background: '#fee2e2', border: 'none', padding: '0.6rem', borderRadius: '0.75rem', cursor: 'pointer', color: '#ef4444' }}>
                        <X size={16} />
                      </button>
                    )}
                 </div>
               </div>
-              <div style={{ position: 'relative' }}>
+              <div>
                 <label style={labelStyle}>BOŞALTMA TARİHİ</label>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                   <Calendar style={{ position: 'absolute', left: '0.8rem', color: '#1e3a5f', zIndex: 2, pointerEvents: 'none' }} size={16} />
-                   <input type="date" style={{...inputStyle, paddingLeft: '2.5rem', paddingRight: '2.5rem'}} value={formData.bosaltma_tarihi} onChange={(e) => setFormData({...formData, bosaltma_tarihi: e.target.value})} />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                   <div style={{ position: 'relative', flex: 1 }}>
+                     <Calendar style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#1e3a5f', pointerEvents: 'none', zIndex: 1 }} size={16} />
+                     <input type="date" style={{...inputStyle, paddingLeft: '2.8rem'}} value={formData.bosaltma_tarihi} onChange={(e) => setFormData({...formData, bosaltma_tarihi: e.target.value})} />
+                   </div>
                    {formData.bosaltma_tarihi && (
-                     <button type="button" onClick={() => setFormData({...formData, bosaltma_tarihi: ''})} style={{ position: 'absolute', right: '2.2rem', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                     <button type="button" onClick={() => setFormData({...formData, bosaltma_tarihi: ''})} style={{ background: '#fee2e2', border: 'none', padding: '0.6rem', borderRadius: '0.75rem', cursor: 'pointer', color: '#ef4444' }}>
                        <X size={16} />
                      </button>
                    )}
