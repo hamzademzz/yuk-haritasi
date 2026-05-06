@@ -212,22 +212,29 @@ export default function IlanVerPage() {
                 <input required style={inputStyle} placeholder="Şehir ve İlçe" value={formData.nereye} onChange={(e) => setFormData({...formData, nereye: e.target.value})} />
               </div>
             </div>
+            {/* CORRECTED DATE BOXES */}
             <div className="mobile-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
-              <div>
+              <div style={{ position: 'relative' }}>
                 <label style={labelStyle}>YÜKLEME TARİHİ</label>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                   <input required type="date" style={{...inputStyle, paddingRight: '2.5rem'}} value={formData.yukleme_tarihi} onChange={(e) => setFormData({...formData, yukleme_tarihi: e.target.value})} />
+                   <Calendar style={{ position: 'absolute', left: '0.8rem', color: '#1e3a5f', zIndex: 2, pointerEvents: 'none' }} size={16} />
+                   <input required type="date" style={{...inputStyle, paddingLeft: '2.5rem', paddingRight: '2.5rem'}} value={formData.yukleme_tarihi} onChange={(e) => setFormData({...formData, yukleme_tarihi: e.target.value})} />
                    {formData.yukleme_tarihi && (
-                     <X size={16} onClick={() => setFormData({...formData, yukleme_tarihi: ''})} style={{ position: 'absolute', right: '2.2rem', cursor: 'pointer', color: '#ef4444' }} />
+                     <button type="button" onClick={() => setFormData({...formData, yukleme_tarihi: ''})} style={{ position: 'absolute', right: '2.2rem', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                       <X size={16} />
+                     </button>
                    )}
                 </div>
               </div>
-              <div>
+              <div style={{ position: 'relative' }}>
                 <label style={labelStyle}>BOŞALTMA TARİHİ</label>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                   <input type="date" style={{...inputStyle, paddingRight: '2.5rem'}} value={formData.bosaltma_tarihi} onChange={(e) => setFormData({...formData, bosaltma_tarihi: e.target.value})} />
+                   <Calendar style={{ position: 'absolute', left: '0.8rem', color: '#1e3a5f', zIndex: 2, pointerEvents: 'none' }} size={16} />
+                   <input type="date" style={{...inputStyle, paddingLeft: '2.5rem', paddingRight: '2.5rem'}} value={formData.bosaltma_tarihi} onChange={(e) => setFormData({...formData, bosaltma_tarihi: e.target.value})} />
                    {formData.bosaltma_tarihi && (
-                     <X size={16} onClick={() => setFormData({...formData, bosaltma_tarihi: ''})} style={{ position: 'absolute', right: '2.2rem', cursor: 'pointer', color: '#ef4444' }} />
+                     <button type="button" onClick={() => setFormData({...formData, bosaltma_tarihi: ''})} style={{ position: 'absolute', right: '2.2rem', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                       <X size={16} />
+                     </button>
                    )}
                 </div>
               </div>
