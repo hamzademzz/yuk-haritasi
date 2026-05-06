@@ -152,6 +152,7 @@ export default function IlanVerPage() {
        <style>{`
         input::placeholder { color: #94a3b8 !important; font-weight: 500; font-size: 0.8rem; }
         input::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(0.2); }
+        input[type="date"]::-webkit-datetime-edit { padding-left: 0.5rem; }
         @media (max-width: 600px) {
           .mobile-grid { grid-template-columns: 1fr !important; }
           .form-padding { padding: 1.5rem !important; }
@@ -218,7 +219,18 @@ export default function IlanVerPage() {
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                    <div style={{ position: 'relative', flex: 1 }}>
                      <Calendar style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#1e3a5f', pointerEvents: 'none', zIndex: 1 }} size={16} />
-                     <input required type="date" style={{...inputStyle, paddingLeft: '2.8rem'}} value={formData.yukleme_tarihi} onChange={(e) => setFormData({...formData, yukleme_tarihi: e.target.value})} />
+                     <input 
+                      required 
+                      type="date" 
+                      style={{
+                        ...inputStyle, 
+                        paddingLeft: '2.8rem', 
+                        appearance: 'none', 
+                        display: 'block'
+                      }} 
+                      value={formData.yukleme_tarihi} 
+                      onChange={(e) => setFormData({...formData, yukleme_tarihi: e.target.value})} 
+                    />
                    </div>
                    {formData.yukleme_tarihi && (
                      <button type="button" onClick={() => setFormData({...formData, yukleme_tarihi: ''})} style={{ background: '#fee2e2', border: 'none', padding: '0.6rem', borderRadius: '0.75rem', cursor: 'pointer', color: '#ef4444' }}>
@@ -232,7 +244,17 @@ export default function IlanVerPage() {
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                    <div style={{ position: 'relative', flex: 1 }}>
                      <Calendar style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#1e3a5f', pointerEvents: 'none', zIndex: 1 }} size={16} />
-                     <input type="date" style={{...inputStyle, paddingLeft: '2.8rem'}} value={formData.bosaltma_tarihi} onChange={(e) => setFormData({...formData, bosaltma_tarihi: e.target.value})} />
+                     <input 
+                      type="date" 
+                      style={{
+                        ...inputStyle, 
+                        paddingLeft: '2.8rem', 
+                        appearance: 'none', 
+                        display: 'block'
+                      }} 
+                      value={formData.bosaltma_tarihi} 
+                      onChange={(e) => setFormData({...formData, bosaltma_tarihi: e.target.value})} 
+                    />
                    </div>
                    {formData.bosaltma_tarihi && (
                      <button type="button" onClick={() => setFormData({...formData, bosaltma_tarihi: ''})} style={{ background: '#fee2e2', border: 'none', padding: '0.6rem', borderRadius: '0.75rem', cursor: 'pointer', color: '#ef4444' }}>
@@ -250,7 +272,7 @@ export default function IlanVerPage() {
             </h3>
             <div className="mobile-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
-                <label style={labelStyle}>YETKİLİ AD SOYAD</label>
+                <label style={labelStyle}>YÜKÜ VEREN (AD SOYAD)</label>
                 <input required style={inputStyle} placeholder="Adınız Soyadınız" value={formData.ilan_sahibi_ad_soyad} onChange={(e) => setFormData({...formData, ilan_sahibi_ad_soyad: e.target.value})} />
               </div>
               <div style={{ position: 'relative' }}>
