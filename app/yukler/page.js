@@ -58,9 +58,15 @@ function YukListesi() {
     <div style={{ backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: 'sans-serif' }}>
       <style>{`
         input::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(0.2); }
-        input[type="date"]::-webkit-datetime-edit { padding-left: 0.5rem; }
+        /* Tarih metnini ikonun sağından başlatır */
+        input[type="date"]::-webkit-datetime-edit { padding-left: 0.8rem !important; }
+        @media (max-width: 600px) {
+          .mobile-stack { flex-direction: column !important; align-items: stretch !important; }
+          .mobile-full { width: 100% !important; min-width: 100% !important; }
+        }
       `}</style>
 
+      {/* ENTERPRISE HEADER */}
       <div style={{ backgroundColor: '#1e3a5f', paddingTop: '3rem', paddingBottom: '6rem', paddingLeft: '1rem', paddingRight: '1rem' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <Link href="/" style={{ color: '#ffffff', textDecoration: 'none', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.1em', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
@@ -77,27 +83,27 @@ function YukListesi() {
       </div>
 
       <div style={{ maxWidth: '1100px', margin: '-3rem auto 0', padding: '0 1rem 5rem' }}>
-        <form onSubmit={handleSearch} style={{ backgroundColor: '#ffffff', padding: '1rem', borderRadius: '1rem', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'row', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem', alignItems: 'center' }}>
+        <form onSubmit={handleSearch} className="mobile-stack" style={{ backgroundColor: '#ffffff', padding: '1rem', borderRadius: '1rem', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'row', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem', alignItems: 'center' }}>
           
-          <div style={{ flex: 1, minWidth: '200px' }}>
+          <div className="mobile-full" style={{ flex: 1, minWidth: '180px' }}>
             <input 
               style={{ width: '100%', padding: '1rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '0.9rem', outline: 'none' }}
               type="text" placeholder="Nereden?" value={neredenInput} onChange={(e) => setNeredenInput(e.target.value)}
             />
           </div>
 
-          <div style={{ flex: 1, minWidth: '200px' }}>
+          <div className="mobile-full" style={{ flex: 1, minWidth: '180px' }}>
             <input 
               style={{ width: '100%', padding: '1rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '0.9rem', outline: 'none' }}
               type="text" placeholder="Nereye?" value={nereyeInput} onChange={(e) => setNereyeInput(e.target.value)}
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '220px' }}>
+          <div className="mobile-full" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1.2, minWidth: '220px' }}>
             <div style={{ position: 'relative', flex: 1 }}>
-               <Calendar size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#1e3a5f', pointerEvents: 'none', zIndex: 1 }} />
+               <Calendar size={18} style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#1e3a5f', pointerEvents: 'none', zIndex: 1 }} />
                <input 
-                style={{ width: '100%', padding: '1rem 0.5rem 1rem 3.2rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '0.9rem', outline: 'none' }}
+                style={{ width: '100%', padding: '1rem 0.5rem 1rem 2.8rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '0.9rem', outline: 'none' }}
                 type="date" value={tarihInput} onChange={(e) => setTarihInput(e.target.value)}
               />
             </div>
@@ -108,7 +114,7 @@ function YukListesi() {
             )}
           </div>
 
-          <button type="submit" style={{ backgroundColor: '#f58220', color: '#ffffff', padding: '1rem 2.5rem', borderRadius: '0.75rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+          <button type="submit" className="mobile-full" style={{ backgroundColor: '#f58220', color: '#ffffff', padding: '1rem 2.5rem', borderRadius: '0.75rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexShrink: 0 }}>
             <Search size={18} /> BUL
           </button>
         </form>
