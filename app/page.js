@@ -16,7 +16,7 @@ const SEHIRLER = [
   "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Amasya", "Ankara", "Antalya", "Artvin", "Aydın", "Balıkesir", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkari", "Hatay", "Isparta", "Mersin", "İstanbul", "İzmir", "Kars", "Kastamonu", "Kayseri", "Kırklareli", "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Kahramanmaraş", "Mardin", "Muğla", "Muş", "Nevşehir", "Niğde", "Ordu", "Rize", "Sakarya", "Samsun", "Siirt", "Sinop", "Sivas", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Şanlıurfa", "Uşak", "Van", "Yozgat", "Zonguldak", "Aksaray", "Bayburt", "Karaman", "Kırıkkale", "Batman", "Şırnak", "Bartın", "Ardahan", "Iğdır", "Yalova", "Karabük", "Kilis", "Osmaniye", "Düzce"
 ].sort((a, b) => a.localeCompare(b, 'tr'));
 
-const ARAC_TIPLERI = ["Tır (Tenteli)", "Tır (Açık)", "Tır (Frigo)", "Kamyon (Onteker)", "Kamyon (Kırkayak)", "Kamyonet", "Panelvan", "Lowbed", "Damperli"];
+const ARAC_TIPLERI = ["Tır", "Kamyon", "Kamyonet", "Panelvan", "Forklift", "Vinç", "Lowbed", "Oto Kurtarıcı"];
 
 export default function HomePage() {
   const router = useRouter();
@@ -69,6 +69,9 @@ export default function HomePage() {
   const handleBul = () => {
     if (aktifTab === "firma") {
       router.push(`/firmalar?arama=${firmaAdi}&sehir=${nereden}`);
+    } else if (aktifTab === "arac") {
+      const params = new URLSearchParams({ konum: nereden, tip: aracTipi });
+      router.push(`/araclar?${params.toString()}`);
     } else {
       const params = new URLSearchParams({ nereden, nereye, aracTipi });
       router.push(`/yukler?${params.toString()}`);
@@ -77,9 +80,9 @@ export default function HomePage() {
 
   const ilanlar = [
     { rota: "İstanbul → Ankara", yuk: "Parça Yük", arac: "Kamyon", tarih: "25 Mayıs 2024" },
-    { rota: "Mersin → İzmir", yuk: "Komple Yük", arac: "Tır / Tenteli", tarih: "24 Mayıs 2024" },
+    { rota: "Mersin → İzmir", yuk: "Komple Yük", arac: "Tır", tarih: "24 Mayıs 2024" },
     { rota: "Gaziantep → Bursa", yuk: "Parça Yük", arac: "Kamyon", tarih: "25 Mayıs 2024" },
-    { rota: "Konya → Samsun", yuk: "Komple Yük", arac: "Tır / Tenteli", tarih: "26 Mayıs 2024" },
+    { rota: "Konya → Samsun", yuk: "Komple Yük", arac: "Tır", tarih: "26 Mayıs 2024" },
   ];
 
   const lojistikHizmetler = [
@@ -124,7 +127,7 @@ export default function HomePage() {
               <Link href="/yukler" className="hover:text-[#f58220] transition">Yük İlanları</Link>
               <Link href="/araclar" className="hover:text-[#f58220] transition">Araç İlanları</Link>
               <Link href="/firmalar" className="hover:text-[#f58220] transition">Firma Rehberi</Link>
-              <Link href="/ilan-ver" className="flex items-center gap-1.5 text-[#f58220]">
+              <Link href="/araclar" className="flex items-center gap-1.5 text-[#f58220]">
                 <PlusCircle size={16}/> İlan Ver
               </Link>
             </nav>
@@ -195,20 +198,22 @@ export default function HomePage() {
               ) : (
                 <>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase font-black italic tracking-tighter">Nereden?</label>
+                    <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase font-black italic tracking-tighter">{aktifTab === "arac" ? "Bulunduğu Şehir" : "Nereden?"}</label>
                     <div className="relative">
                       <MapPin size={16} className="absolute left-3 top-3.5 text-gray-400" />
                       <input list="sehirler" value={nereden} onChange={(e) => setNereden(e.target.value)} className="w-full p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold text-gray-900" placeholder="Şehir Seç..." />
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase font-black italic tracking-tighter">Nereye?</label>
-                    <div className="relative">
-                      <MapPin size={16} className="absolute left-3 top-3.5 text-gray-400" />
-                      <input list="sehirler" value={nereye} onChange={(e) => setNereye(e.target.value)} className="w-full p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold text-gray-900" placeholder="Şehir Seç..." />
+                  {aktifTab === "yuk" && (
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase font-black italic tracking-tighter">Nereye?</label>
+                      <div className="relative">
+                        <MapPin size={16} className="absolute left-3 top-3.5 text-gray-400" />
+                        <input list="sehirler" value={nereye} onChange={(e) => setNereye(e.target.value)} className="w-full p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold text-gray-900" placeholder="Şehir Seç..." />
+                      </div>
                     </div>
-                  </div>
-                  <div className="md:col-span-2 flex gap-3 pt-2">
+                  )}
+                  <div className={`${aktifTab === "arac" ? "md:col-span-1" : "md:col-span-2"} flex gap-3 pt-2 w-full`}>
                     <div className="flex-1 space-y-1">
                       <label className="text-[11px] font-bold text-gray-400 ml-1 uppercase font-black italic tracking-tighter">Araç Tipi</label>
                       <input list="arac-tipleri" value={aracTipi} onChange={(e) => setAracTipi(e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold text-gray-900" placeholder="Seçin..." />
@@ -367,7 +372,7 @@ export default function HomePage() {
           <span className="text-[8px] font-black uppercase tracking-tighter italic">Yük Ara</span>
         </Link>
         <div className="relative -mt-10 flex-1 flex justify-center scale-90">
-          <Link href="/ilan-ver">
+          <Link href="/araclar">
             <div className="w-14 h-14 bg-[#f58220] rounded-full flex flex-col items-center justify-center text-white shadow-xl shadow-orange-200 border-4 border-white active:scale-90 transition">
               <PlusCircle size={20} />
               <span className="text-[7px] font-bold uppercase mt-0.5">İlan Ver</span>
