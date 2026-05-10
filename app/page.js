@@ -127,7 +127,7 @@ export default function HomePage() {
               <Link href="/yukler" className="hover:text-[#f58220] transition">Yük İlanları</Link>
               <Link href="/araclar" className="hover:text-[#f58220] transition">Araç İlanları</Link>
               <Link href="/firmalar" className="hover:text-[#f58220] transition">Firma Rehberi</Link>
-              <Link href="/araclar" className="flex items-center gap-1.5 text-[#f58220]">
+              <Link href="/ilan-ver" className="flex items-center gap-1.5 text-[#f58220]">
                 <PlusCircle size={16}/> İlan Ver
               </Link>
             </nav>
@@ -372,7 +372,7 @@ export default function HomePage() {
           <span className="text-[8px] font-black uppercase tracking-tighter italic">Yük Ara</span>
         </Link>
         <div className="relative -mt-10 flex-1 flex justify-center scale-90">
-          <Link href="/araclar">
+          <Link href="/ilan-ver">
             <div className="w-14 h-14 bg-[#f58220] rounded-full flex flex-col items-center justify-center text-white shadow-xl shadow-orange-200 border-4 border-white active:scale-90 transition">
               <PlusCircle size={20} />
               <span className="text-[7px] font-bold uppercase mt-0.5">İlan Ver</span>

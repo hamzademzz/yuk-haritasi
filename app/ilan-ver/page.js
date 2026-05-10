@@ -91,9 +91,9 @@ export default function IlanVerPage() {
     color: '#1e3a5f'
   };
 
-  const SelectionCard = ({ title, icon: Icon, active, desc }) => (
+  const SelectionCard = ({ title, icon: Icon, active, desc, onClick }) => (
     <div 
-      onClick={() => active && setStep('form')}
+      onClick={onClick}
       style={{
         backgroundColor: '#ffffff',
         padding: '2rem',
@@ -126,8 +126,14 @@ export default function IlanVerPage() {
           <p style={{ color: '#64748b', marginBottom: '3rem', fontWeight: '500' }}>Sistemde yayınlamak istediğiniz ilan kategorisini belirleyin.</p>
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-            <SelectionCard title="YÜK İLANI" desc="Taşınacak yükünüz için araç bulun" icon={Package} active={true} />
-            <SelectionCard title="ARAÇ İLANI" desc="Boş aracınız için yük bulun" icon={Truck} active={false} />
+            <SelectionCard title="YÜK İLANI" desc="Taşınacak yükünüz için araç bulun" icon={Package} active={true} onClick={() => router.push('/yukler?ekle=true')} />
+            <SelectionCard 
+  title="ARAÇ İLANI" 
+  desc="Boş aracınız için yük bulun" 
+  icon={Truck} 
+  active={true} 
+  onClick={() => router.push('/araclar?ekle=true')} 
+/>
             <SelectionCard title="FİRMA İLANI" desc="Lojistik şirketinizi tanıtın" icon={Building2} active={false} />
           </div>
         </div>

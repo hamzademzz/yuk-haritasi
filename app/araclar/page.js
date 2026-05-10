@@ -26,6 +26,19 @@ function AracListesi() {
     resim_url: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80&w=800'
   });
 
+  // AUTO-OPEN MODAL LOGIC - Fixed to trigger reliably and prevent size-mismatch errors
+  useEffect(() => {
+    // We check the URL directly for the 'ekle' parameter
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('ekle') === 'true') {
+      setIsModalOpen(true);
+      
+      // We clean the URL silently so refreshing doesn't keep the form open
+      const newUrl = window.location.pathname;
+      window.history.replaceState(null, '', newUrl);
+    }
+  }, []); // Only runs once on mount to prevent render loops
+
   // VERİLERİ ÇEK (DB CONNECTION)
   const fetchAraclar = useCallback(async () => {
     setLoading(true);
