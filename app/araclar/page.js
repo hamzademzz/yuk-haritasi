@@ -17,7 +17,6 @@ function AracListesi() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Yeni Araç Form State
   const [yeniArac, setYeniArac] = useState({
     arac_tipi: '',
     mevcut_konum_sehir: '',
@@ -26,20 +25,16 @@ function AracListesi() {
     resim_url: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80&w=800'
   });
 
-  // AUTO-OPEN MODAL LOGIC - Fixed to trigger reliably and prevent size-mismatch errors
+  // AUTO-OPEN MODAL LOGIC
   useEffect(() => {
-    // We check the URL directly for the 'ekle' parameter
     const params = new URLSearchParams(window.location.search);
     if (params.get('ekle') === 'true') {
       setIsModalOpen(true);
-      
-      // We clean the URL silently so refreshing doesn't keep the form open
       const newUrl = window.location.pathname;
       window.history.replaceState(null, '', newUrl);
     }
-  }, []); // Only runs once on mount to prevent render loops
+  }, []);
 
-  // VERİLERİ ÇEK (DB CONNECTION)
   const fetchAraclar = useCallback(async () => {
     setLoading(true);
     let query = supabase.from('araclar').select('*').eq('is_active', true);
@@ -65,7 +60,7 @@ function AracListesi() {
     fetchAraclar(); 
   }, [fetchAraclar]);
 
-  // GALERİDEN RESİM YÜKLEME
+  // FIXED DYNAMIC IMAGE UPLOAD WITH FALLBACK LOGIC
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -80,26 +75,29 @@ function AracListesi() {
       .upload(filePath, file);
 
     if (uploadError) {
-      alert('Resim yüklenemedi!');
+      alert('Resim yüklenemedi: ' + uploadError.message);
       setIsUploading(false);
       return;
     }
 
     const { data } = supabase.storage.from('arac-resimleri').getPublicUrl(filePath);
-    setYeniArac({ ...yeniArac, resim_url: data.publicUrl });
+    
+    // Fallback logic if getPublicUrl is restricted
+    const finalUrl = data.publicUrl || `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/arac-resimleri/${filePath}`;
+
+    setYeniArac(prev => ({ ...prev, resim_url: finalUrl }));
     setIsUploading(false);
   };
 
-  // YENİ ARAÇ KAYDET
   const handleEkle = async (e) => {
     e.preventDefault();
     const { error } = await supabase.from('araclar').insert([yeniArac]);
 
     if (error) {
-      alert('İlan eklenirken bir hata oluştu.');
+      alert('İlan eklenirken bir hata oluştu: ' + error.message);
     } else {
       setIsModalOpen(false);
-      fetchAraclar(); // Listeyi güncelle
+      fetchAraclar();
     }
   };
 
@@ -242,10 +240,10 @@ function AracListesi() {
             <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#1e3a5f', marginBottom: '1.5rem', fontStyle: 'italic', textTransform: 'uppercase' }}>YENİ ARAÇ EKLE</h2>
             
             <form onSubmit={handleEkle} style={{ display: 'grid', gap: '1rem' }}>
-              <input required style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold' }} placeholder="Araç Tipi (Örn: Tır)" onChange={(e) => setYeniArac({...yeniArac, arac_tipi: e.target.value})} />
-              <input required style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold' }} placeholder="Bulunduğu Şehir" onChange={(e) => setYeniArac({...yeniArac, mevcut_konum_sehir: e.target.value})} />
-              <input required style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold' }} placeholder="İletişim Numarası" onChange={(e) => setYeniArac({...yeniArac, iletisim: e.target.value})} />
-              <input style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold' }} placeholder="Kapasite (Ton) - Opsiyonel" onChange={(e) => setYeniArac({...yeniArac, kapasite_ton: e.target.value})} />
+              <input required style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="Araç Tipi (Örn: Tır)" onChange={(e) => setYeniArac({...yeniArac, arac_tipi: e.target.value})} />
+              <input required style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="Bulunduğu Şehir" onChange={(e) => setYeniArac({...yeniArac, mevcut_konum_sehir: e.target.value})} />
+              <input required style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="İletişim Numarası" onChange={(e) => setYeniArac({...yeniArac, iletisim: e.target.value})} />
+              <input style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="Kapasite (Ton) - Opsiyonel" onChange={(e) => setYeniArac({...yeniArac, kapasite_ton: e.target.value})} />
               
               <div style={{ border: '2px dashed #e2e8f0', borderRadius: '0.75rem', padding: '1rem', textAlign: 'center' }}>
                 <input type="file" id="file" hidden accept="image/*" onChange={handleImageUpload} />
