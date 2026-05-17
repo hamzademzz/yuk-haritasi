@@ -194,6 +194,15 @@ function FirmalarRehberi() {
     }
   };
 
+  const hizmetTipleri = [
+    { ad: "Şehirlerarası Nakliye", ikon: <Truck size={24} /> },
+    { ad: "Parsiyel Taşıma", ikon: <Package size={24} /> },
+    { ad: "Komple Taşıma", ikon: <Truck size={24} /> },
+    { ad: "Depolama Hizmeti", ikon: <Warehouse size={24} /> },
+    { ad: "Forklift Hizmeti", ikon: <Construction size={24} /> },
+    { ad: "Vinç Hizmeti", ikon: <Anchor size={24} /> },
+  ];
+
   if (seciliFirma) {
     const bolgeler = typeof seciliFirma.hizmet_bolgeleri === 'string' 
       ? seciliFirma.hizmet_bolgeleri.split(',').map(s => s.trim()).filter(Boolean)
@@ -284,7 +293,7 @@ function FirmalarRehberi() {
                   )}
                 </div>
 
-                {/* İLETİŞİM PANELİ - ŞİFRELENMİŞ GÜVENLİK KATMANI (SADECE GİRİŞ YAPANLARA AÇIK) */}
+                {/* İLETİŞİM PANELİ */}
                 <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', border: '1px solid #e2e8f0' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#1e3a5f', margin: '0 0 1rem 0' }}>İletişim Bilgileri</h3>
                   
@@ -331,7 +340,7 @@ function FirmalarRehberi() {
                 {/* HİZMET BÖLGELERİ */}
                 <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', border: '1px solid #e2e8f0' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#1e3a5f', margin: '0 0 1rem 0' }}>Hizmet Bölgeleri</h3>
-                  <div style={{ width: '100%', height: '140px', backgroundColor: '#f8fafc', borderRadius: '0.75rem', marginBottom: '1rem', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #f1f5f9' }}>
+                  <div style={{ width: '100%', height: '140px', backgroundColor: '#f8fafc', borderRadius: '0.75rem', marginBottom: '1rem', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
                     <img 
                       src="https://vemaps.com/uploads/img/tr-03.png" 
                       alt="Harita" 
@@ -382,7 +391,7 @@ function FirmalarRehberi() {
 
               </div>
 
-              {/* DİNAMİK VERİ TABANLI AKTİF HİZMETLER */}
+              {/* HİZMETLERİMİZ */}
               <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', border: '1px solid #e2e8f0' }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#1e3a5f', margin: '0 0 1rem 0' }}>Hizmetlerimiz</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.75rem' }}>
@@ -479,7 +488,7 @@ function FirmalarRehberi() {
                   onClick={() => openFirmaDetay(firma)}
                   style={{ backgroundColor: '#ffffff', borderRadius: '1rem', border: '1px solid #e2e8f0', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
                 >
-                  <div style={{ width: '70px', height: '70px', backgroundColor: '#f8fafc', borderRadius: '0.75rem', padding: '0.4rem', display: 'flex', alignItems: 'center', justifyCentent: 'center', marginBottom: '1rem', border: '1px solid #f1f5f9' }}>
+                  <div style={{ width: '70px', height: '70px', backgroundColor: '#f8fafc', borderRadius: '0.75rem', padding: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem', border: '1px solid #f1f5f9' }}>
                     <img src={firma.logo_url || "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=300"} alt={firma.firma_adi} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                   </div>
                   
@@ -502,7 +511,7 @@ function FirmalarRehberi() {
         )}
       </div>
 
-      {/* YENİ FİRMA EKLEME FORMU */}
+      {/* YENİ FİRMA EKLEME FORMU - TÜM YAZI SOLUKLUK SORUNLARI GİDERİLDİ */}
       {firmaEkleModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
           <div style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '550px', borderRadius: '1rem', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
@@ -513,61 +522,61 @@ function FirmalarRehberi() {
             
             <form onSubmit={handleFirmaKaydet} className="no-scrollbar" style={{ padding: '1.5rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.35rem' }}>Firma Ticari Unvanı *</label>
-                <input required type="text" name="firma_adi" value={yeniFirma.firma_adi} onChange={handleInputChange} style={{ width: '100%', padding: '0.75rem', border: '1px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.85rem', outline: 'none' }} placeholder="Örn: Aydın Lojistik Ltd." />
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', color: '#1e3a5f', marginBottom: '0.4rem' }}>Firma Ticari Unvanı *</label>
+                <input required type="text" name="firma_adi" value={yeniFirma.firma_adi} onChange={handleInputChange} style={{ width: '100%', padding: '0.85rem', border: '2px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.9rem', color: '#000000', fontWeight: '700', backgroundColor: '#ffffff', outline: 'none' }} placeholder="Örn: Aydın Lojistik Ltd." />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.35rem' }}>Firma Hakkında Tanıtım Yazısı *</label>
-                <textarea required rows="3" name="hakkimizda" value={yeniFirma.hakkimizda} onChange={handleInputChange} style={{ width: '100%', padding: '0.75rem', border: '1px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.85rem', outline: 'none', fontFamily: 'sans-serif', resize: 'vertical' }} placeholder="Hizmet ağınız, araç filonuz ve misyonunuz hakkında detaylı bilgi giriniz..."></textarea>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', color: '#1e3a5f', marginBottom: '0.4rem' }}>Firma Hakkında Tanıtım Yazısı *</label>
+                <textarea required rows="3" name="hakkimizda" value={yeniFirma.hakkimizda} onChange={handleInputChange} style={{ width: '100%', padding: '0.85rem', border: '2px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.9rem', color: '#000000', fontWeight: '700', backgroundColor: '#ffffff', outline: 'none', fontFamily: 'sans-serif', resize: 'vertical' }} placeholder="Hizmet ağınız, araç filonuz ve misyonunuz hakkında bilgi giriniz..."></textarea>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.35rem' }}>Telefon *</label>
-                  <input required type="tel" name="telefon" value={yeniFirma.telefon} onChange={handleInputChange} style={{ width: '100%', padding: '0.75rem', border: '1px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.85rem', outline: 'none' }} placeholder="0532 123 45 67" />
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', color: '#1e3a5f', marginBottom: '0.4rem' }}>Telefon *</label>
+                  <input required type="tel" name="telefon" value={yeniFirma.telefon} onChange={handleInputChange} style={{ width: '100%', padding: '0.85rem', border: '2px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.9rem', color: '#000000', fontWeight: '700', backgroundColor: '#ffffff', outline: 'none' }} placeholder="0532 123 45 67" />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.35rem' }}>WhatsApp</label>
-                  <input type="tel" name="whatsapp" value={yeniFirma.whatsapp} onChange={handleInputChange} style={{ width: '100%', padding: '0.75rem', border: '1px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.85rem', outline: 'none' }} placeholder="0532 123 45 67" />
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', color: '#1e3a5f', marginBottom: '0.4rem' }}>WhatsApp</label>
+                  <input type="tel" name="whatsapp" value={yeniFirma.whatsapp} onChange={handleInputChange} style={{ width: '100%', padding: '0.85rem', border: '2px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.9rem', color: '#000000', fontWeight: '700', backgroundColor: '#ffffff', outline: 'none' }} placeholder="0532 123 45 67" />
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.35rem' }}>E-Posta Adresi</label>
-                  <input type="email" name="eposta" value={yeniFirma.eposta} onChange={handleInputChange} style={{ width: '100%', padding: '0.75rem', border: '1px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.85rem', outline: 'none' }} placeholder="destek@firma.com" />
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', color: '#1e3a5f', marginBottom: '0.4rem' }}>E-Posta Adresi</label>
+                  <input type="email" name="eposta" value={yeniFirma.eposta} onChange={handleInputChange} style={{ width: '100%', padding: '0.85rem', border: '2px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.9rem', color: '#000000', fontWeight: '700', backgroundColor: '#ffffff', outline: 'none' }} placeholder="destek@firma.com" />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.35rem' }}>Merkez Şehir *</label>
-                  <select required name="merkez_konum" value={yeniFirma.merkez_konum} onChange={handleInputChange} style={{ width: '100%', padding: '0.75rem', border: '1px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.85rem', outline: 'none', backgroundColor: '#ffffff' }}>
-                    <option value="">Şehir Seçiniz</option>
-                    {TURKIYE_SEHIRLERI.map((city) => <option key={city} value={city}>{city}</option>)}
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', color: '#1e3a5f', marginBottom: '0.4rem' }}>Merkez Şehir *</label>
+                  <select required name="merkez_konum" value={yeniFirma.merkez_konum} onChange={handleInputChange} style={{ width: '100%', padding: '0.85rem', border: '2px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.9rem', color: '#000000', fontWeight: '700', backgroundColor: '#ffffff', outline: 'none' }}>
+                    <option value="" style={{ color: '#94a3b8' }}>Şehir Seçiniz</option>
+                    {TURKIYE_SEHIRLERI.map((city) => <option key={city} value={city} style={{ color: '#000000' }}>{city}</option>)}
                   </select>
                 </div>
               </div>
 
-              {/* DİNAMİK DROPDOWN SEÇİCİ */}
+              {/* DİNAMİK MULTI-SELECT DROPDOWN */}
               <div style={{ position: 'relative' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.35rem' }}>Hizmet Verdiği Şehirler *</label>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', color: '#1e3a5f', marginBottom: '0.4rem' }}>Hizmet Verdiği Şehirler *</label>
                 <div 
                   onClick={() => setSehirDropdownAcik(!sehirDropdownAcik)}
-                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.85rem', backgroundColor: '#ffffff', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.25rem' }}
+                  style={{ width: '100%', padding: '0.85rem', border: '2px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.9rem', backgroundColor: '#ffffff', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.35rem' }}
                 >
                   {yeniFirma.hizmet_bolgeleri.length > 0 
-                    ? yeniFirma.hizmet_bolgeleri.map(s => <span key={s} style={{ backgroundColor: '#eff6ff', color: '#2563eb', padding: '0.1rem 0.4rem', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: 'bold' }}>{s}</span>)
-                    : <span style={{ color: '#94a3b8' }}>Şehirleri Seçmek için Tıklayın ({yeniFirma.hizmet_bolgeleri.length})</span>
+                    ? yeniFirma.hizmet_bolgeleri.map(s => <span key={s} style={{ backgroundColor: '#2563eb', color: '#ffffff', padding: '0.2rem 0.5rem', borderRadius: '0.35rem', fontSize: '0.8rem', fontWeight: 'bold' }}>{s}</span>)
+                    : <span style={{ color: '#94a3b8', fontWeight: '700' }}>Şehirleri Seçmek için Tıklayın ({yeniFirma.hizmet_bolgeleri.length})</span>
                   }
                 </div>
                 {sehirDropdownAcik && (
-                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '0.5rem', maxHeight: '180px', overflowY: 'auto', zIndex: 110, padding: '0.5rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#ffffff', border: '2px solid #cbd5e1', borderRadius: '0.5rem', maxHeight: '180px', overflowY: 'auto', zIndex: 110, padding: '0.5rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
                     {TURKIYE_SEHIRLERI.map((sehir) => {
                       const secili = yeniFirma.hizmet_bolgeleri.includes(sehir);
                       return (
                         <div 
                           key={sehir} 
                           onClick={() => toggleSehirSecim(sehir)}
-                          style={{ padding: '0.4rem 0.5rem', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer', backgroundColor: secili ? '#f1f5f9' : 'transparent', color: secili ? '#2563eb' : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '0.25rem' }}
+                          style={{ padding: '0.5rem', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', backgroundColor: secili ? '#eff6ff' : 'transparent', color: secili ? '#2563eb' : '#334155', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '0.25rem' }}
                         >
                           {sehir} {secili && '✓'}
                         </div>
@@ -577,10 +586,10 @@ function FirmalarRehberi() {
                 )}
               </div>
 
-              {/* HİZMET KATAGORİLERİ VERİ MODELİ BAĞLANTILARI */}
+              {/* HİZMET CHECKBOXLARI */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.5rem' }}>Verilen Hizmet Çeşitleri</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', backgroundColor: '#f8fafc', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', color: '#1e3a5f', marginBottom: '0.5rem' }}>Verilen Hizmet Çeşitleri</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', backgroundColor: '#f8fafc', padding: '0.85rem', borderRadius: '0.5rem', border: '2px solid #cbd5e1' }}>
                   {[
                     { key: 'sehirlerarasi_nakliye', etiket: 'Şehirlerarası Nakliye' },
                     { key: 'parsiyel_tasima', etiket: 'Parsiyel Taşıma' },
@@ -589,8 +598,8 @@ function FirmalarRehberi() {
                     { key: 'forklift_hizmeti', etiket: 'Forklift Hizmeti' },
                     { key: 'vinc_hizmeti', etiket: 'Vinç Hizmeti' },
                   ].map((item) => (
-                    <label key={item.key} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 'bold', color: '#334155', cursor: 'pointer' }}>
-                      <input type="checkbox" name={item.key} checked={yeniFirma[item.key]} onChange={handleInputChange} style={{ cursor: 'pointer' }} />
+                    <label key={item.key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 'bold', color: '#334155', cursor: 'pointer' }}>
+                      <input type="checkbox" name={item.key} checked={yeniFirma[item.key]} onChange={handleInputChange} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
                       {item.etiket}
                     </label>
                   ))}
@@ -598,11 +607,11 @@ function FirmalarRehberi() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.35rem' }}>Logo Görsel Linki (URL)</label>
-                <input type="url" name="logo_url" value={yeniFirma.logo_url} onChange={handleInputChange} style={{ width: '100%', padding: '0.75rem', border: '1px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.85rem', outline: 'none' }} placeholder="https://site.com/gorsel.png" />
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', color: '#1e3a5f', marginBottom: '0.4rem' }}>Logo Görsel Linki (URL)</label>
+                <input type="url" name="logo_url" value={yeniFirma.logo_url} onChange={handleInputChange} style={{ width: '100%', padding: '0.85rem', border: '2px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.9rem', color: '#000000', fontWeight: '700', backgroundColor: '#ffffff', outline: 'none' }} placeholder="https://site.com/gorsel.png" />
               </div>
 
-              <button type="submit" style={{ backgroundColor: '#f58220', color: '#ffffff', border: 'none', padding: '0.85rem', borderRadius: '0.5rem', fontWeight: '900', fontSize: '0.95rem', cursor: 'pointer', marginTop: '0.5rem' }}>
+              <button type="submit" style={{ backgroundColor: '#f58220', color: '#ffffff', border: 'none', padding: '1rem', borderRadius: '0.5rem', fontWeight: '900', fontSize: '1rem', cursor: 'pointer', marginTop: '0.5rem' }}>
                 KAYDI TAMAMLA
               </button>
             </form>
