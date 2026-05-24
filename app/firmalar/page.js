@@ -57,6 +57,8 @@ function FirmalarRehberi() {
     puan: '4.8',
     yorum_sayisi: '0',
     is_active: true,
+    tc_kimlik_no: '',
+    vergi_no: '',
     oto_kurtarici: false,
     oto_tasiyici: false,
     sehirlerarasi_nakliye: false,
@@ -186,6 +188,7 @@ function FirmalarRehberi() {
           firma_adi: '', hakkimizda: '', telefon: '', whatsapp: '',
           eposta: '', merkez_konum: '', hizmet_bolgeleri: [], logo_url: '',
           uye_no: '', puan: '4.8', yorum_sayisi: '0', is_active: true,
+          tc_kimlik_no: '', vergi_no: '',
           oto_kurtarici: false, oto_tasiyici: false,
           sehirlerarasi_nakliye: false, parsiyel_tasima: false, komple_tasima: false,
           depolama_hizmeti: false, forklift_hizmeti: false, vinc_hizmeti: false
@@ -480,7 +483,6 @@ function FirmalarRehberi() {
           </button>
         </form>
 
-        {/* Global CSS Inject to optimize desktop view layout over strict style rules */}
         <style jsx global>{`
           @media (min-width: 768px) {
             .responsive-field-search { flex: 2 !important; }
@@ -532,6 +534,25 @@ function FirmalarRehberi() {
             </div>
             
             <form onSubmit={handleFirmaKaydet} className="no-scrollbar" style={{ padding: '1.5rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              
+              {/* ADMIN SECRET DATA FIELDS PANEL */}
+              <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#475569' }}>
+                  <Lock size={14} style={{ color: '#f58220' }} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.02em', color: '#1e3a5f' }}>Resmi Doğrulama Bilgileri (Yalnızca Admin Görür)</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.3rem' }}>TC Kimlik Numarası</label>
+                    <input type="text" maxLength="11" name="tc_kimlik_no" value={yeniFirma.tc_kimlik_no} onChange={handleInputChange} style={{ width: '100%', padding: '0.75rem', border: '2px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.85rem', color: '#000000', fontWeight: '700', backgroundColor: '#ffffff', outline: 'none' }} placeholder="11 Haneli" />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.3rem' }}>Vergi Numarası</label>
+                    <input type="text" maxLength="10" name="vergi_no" value={yeniFirma.vergi_no} onChange={handleInputChange} style={{ width: '100%', padding: '0.75rem', border: '2px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.85rem', color: '#000000', fontWeight: '700', backgroundColor: '#ffffff', outline: 'none' }} placeholder="10 Haneli" />
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', color: '#1e3a5f', marginBottom: '0.4rem' }}>Firma Ticari Unvanı *</label>
                 <input required type="text" name="firma_adi" value={yeniFirma.firma_adi} onChange={handleInputChange} style={{ width: '100%', padding: '0.85rem', border: '2px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.9rem', color: '#000000', fontWeight: '700', backgroundColor: '#ffffff', outline: 'none' }} placeholder="Örn: Aydın Lojistik Ltd." />
