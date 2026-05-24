@@ -10,7 +10,6 @@ import {
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
 
-// Complete list of Turkey's 81 provinces for the dropdown array
 const TURKIYE_SEHIRLERI = [
   "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Amasya", "Ankara", "Antalya", "Artvin", "Aydın", "Balıkesir",
   "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı", "Çorum", "Denizli",
@@ -28,9 +27,11 @@ function FirmalarRehberi() {
 
   const urlArama = searchParams.get('arama') || '';
   const urlSehir = searchParams.get('sehir') || searchParams.get('merkez_konum') || '';
+  const urlHizmet = searchParams.get('hizmet') || '';
 
   const [aramaInput, setAramaInput] = useState(urlArama);
   const [sehirInput, setSehirInput] = useState(urlSehir);
+  const [hizmetInput, setHizmetInput] = useState(urlHizmet);
   
   const [firmalar, setFirmalar] = useState([]);
   const [seciliFirma, setSeciliFirma] = useState(null);
@@ -38,13 +39,11 @@ function FirmalarRehberi() {
   const [aktifTab, setAktifTab] = useState('profil');
   const [session, setSession] = useState(null);
 
-  // Expansion and Dynamic Toggles
   const [hakkimizdaUzun, setHakkimizdaUzun] = useState(false);
   const [sehirleriGoster, setSehirleriGoster] = useState(false);
   const [firmaEkleModal, setFirmaEkleModal] = useState(false);
   const [sehirDropdownAcik, setSehirDropdownAcik] = useState(false);
 
-  // Form State
   const [yeniFirma, setYeniFirma] = useState({
     firma_adi: '',
     hakkimizda: '',
@@ -52,13 +51,14 @@ function FirmalarRehberi() {
     whatsapp: '',
     eposta: '',
     merkez_konum: '',
-    hizmet_bolgeleri: [], // Dynamic array for selections
+    hizmet_bolgeleri: [],
     logo_url: '',
     uye_no: '',
     puan: '4.8',
     yorum_sayisi: '0',
     is_active: true,
-    // Service categories mapped directly as database columns
+    oto_kurtarici: false,
+    oto_tasiyici: false,
     sehirlerarasi_nakliye: false,
     parsiyel_tasima: false,
     komple_tasima: false,
@@ -67,7 +67,6 @@ function FirmalarRehberi() {
     vinc_hizmeti: false
   });
 
-  // Track authenticated session state dynamically
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -83,7 +82,8 @@ function FirmalarRehberi() {
   useEffect(() => {
     setAramaInput(urlArama);
     setSehirInput(urlSehir);
-  }, [urlArama, urlSehir]);
+    setHizmetInput(urlHizmet);
+  }, [urlArama, urlSehir, urlHizmet]);
 
   const fetchFirmalar = useCallback(async () => {
     setLoading(true);
@@ -95,6 +95,9 @@ function FirmalarRehberi() {
       }
       if (urlSehir) {
         query = query.ilike('merkez_konum', `%${urlSehir}%`);
+      }
+      if (urlHizmet) {
+        query = query.eq(urlHizmet, true);
       }
 
       let { data, error } = await query.order('firma_adi', { ascending: true });
@@ -112,7 +115,7 @@ function FirmalarRehberi() {
     } finally {
       setLoading(false);
     }
-  }, [searchParams, urlArama, urlSehir]);
+  }, [searchParams, urlArama, urlSehir, urlHizmet]);
 
   useEffect(() => {
     fetchFirmalar();
@@ -123,6 +126,7 @@ function FirmalarRehberi() {
     const params = new URLSearchParams();
     if (aramaInput) params.set('arama', aramaInput);
     if (sehirInput) params.set('sehir', sehirInput);
+    if (hizmetInput) params.set('hizmet', hizmetInput);
     setSeciliFirma(null);
     router.push(`/firmalar?${params.toString()}`);
   };
@@ -182,6 +186,7 @@ function FirmalarRehberi() {
           firma_adi: '', hakkimizda: '', telefon: '', whatsapp: '',
           eposta: '', merkez_konum: '', hizmet_bolgeleri: [], logo_url: '',
           uye_no: '', puan: '4.8', yorum_sayisi: '0', is_active: true,
+          oto_kurtarici: false, oto_tasiyici: false,
           sehirlerarasi_nakliye: false, parsiyel_tasima: false, komple_tasima: false,
           depolama_hizmeti: false, forklift_hizmeti: false, vinc_hizmeti: false
         });
@@ -194,15 +199,6 @@ function FirmalarRehberi() {
     }
   };
 
-  const hizmetTipleri = [
-    { ad: "Şehirlerarası Nakliye", ikon: <Truck size={24} /> },
-    { ad: "Parsiyel Taşıma", ikon: <Package size={24} /> },
-    { ad: "Komple Taşıma", ikon: <Truck size={24} /> },
-    { ad: "Depolama Hizmeti", ikon: <Warehouse size={24} /> },
-    { ad: "Forklift Hizmeti", ikon: <Construction size={24} /> },
-    { ad: "Vinç Hizmeti", ikon: <Anchor size={24} /> },
-  ];
-
   if (seciliFirma) {
     const bolgeler = typeof seciliFirma.hizmet_bolgeleri === 'string' 
       ? seciliFirma.hizmet_bolgeleri.split(',').map(s => s.trim()).filter(Boolean)
@@ -213,14 +209,12 @@ function FirmalarRehberi() {
     return (
       <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif', paddingBottom: '4rem' }}>
         
-        {/* ÜST BANNER REHBER DÖNÜŞ PANELİ */}
         <div style={{ backgroundColor: '#1e3a5f', padding: '1rem', display: 'flex', alignItems: 'center' }}>
           <button onClick={closeFirmaDetay} style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#ffffff', border: 'none', padding: '0.5rem 1rem', borderRadius: '2rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
             <ArrowLeft size={16} /> REHBERE DÖN
           </button>
         </div>
 
-        {/* ANA KART BANNER GÖVDESİ */}
         <div style={{ position: 'relative', minHeight: '200px', background: 'linear-gradient(rgba(30, 58, 95, 0.7), rgba(30, 58, 95, 0.95)), url("https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&q=80&w=1200")', backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', padding: '1.5rem' }}>
           <div style={{ maxWidth: '1000px', width: '100%', margin: '0 auto', display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <div style={{ backgroundColor: '#ffffff', padding: '0.5rem', borderRadius: '1rem', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', flexShrink: 0 }}>
@@ -243,7 +237,6 @@ function FirmalarRehberi() {
           </div>
         </div>
 
-        {/* SWIPE EDİLEBİLİR SEKMELER ÇUBUĞU */}
         <div style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 10 }}>
           <div className="no-scrollbar" style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', overflowX: 'auto', padding: '0 1rem', WebkitOverflowScrolling: 'touch' }}>
             {[
@@ -268,14 +261,12 @@ function FirmalarRehberi() {
           </div>
         </div>
 
-        {/* PROFiL DETAY PANEL ALANI */}
         <div style={{ maxWidth: '1000px', margin: '1.5rem auto 0', padding: '0 1rem' }}>
           {aktifTab === 'profil' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
                 
-                {/* HAKKIMIZDA */}
                 <div style={{ backgroundColor: '#ffffff', padding: '2rem', borderRadius: '1.5rem', border: '1px solid #e2e8f0' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#1e3a5f', margin: '0 0 0.75rem 0' }}>Hakkımızda</h3>
                   <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
@@ -293,7 +284,6 @@ function FirmalarRehberi() {
                   )}
                 </div>
 
-                {/* İLETİŞİM PANELİ */}
                 <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', border: '1px solid #e2e8f0' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#1e3a5f', margin: '0 0 1rem 0' }}>İletişim Bilgileri</h3>
                   
@@ -337,7 +327,6 @@ function FirmalarRehberi() {
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
                 
-                {/* HİZMET BÖLGELERİ */}
                 <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', border: '1px solid #e2e8f0' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#1e3a5f', margin: '0 0 1rem 0' }}>Hizmet Bölgeleri</h3>
                   <div style={{ width: '100%', height: '140px', backgroundColor: '#f8fafc', borderRadius: '0.75rem', marginBottom: '1rem', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
@@ -370,7 +359,6 @@ function FirmalarRehberi() {
                   )}
                 </div>
 
-                {/* DOĞRULAMA KARTI */}
                 <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
@@ -391,11 +379,12 @@ function FirmalarRehberi() {
 
               </div>
 
-              {/* HİZMETLERİMİZ */}
               <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', border: '1px solid #e2e8f0' }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#1e3a5f', margin: '0 0 1rem 0' }}>Hizmetlerimiz</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.75rem' }}>
                   {[
+                    { key: 'oto_kurtarici', ad: "Oto Kurtarıcı", ikon: <Construction size={24} /> },
+                    { key: 'oto_tasiyici', ad: "Oto Taşıyıcı", ikon: <Truck size={24} /> },
                     { key: 'sehirlerarasi_nakliye', ad: "Şehirlerarası Nakliye", ikon: <Truck size={24} /> },
                     { key: 'parsiyel_tasima', ad: "Parsiyel Taşıma", ikon: <Package size={24} /> },
                     { key: 'komple_tasima', ad: "Komple Taşıma", ikon: <Truck size={24} /> },
@@ -428,7 +417,6 @@ function FirmalarRehberi() {
     );
   }
 
-  // ANA LİSTE GÖRÜNÜMÜ
   return (
     <div style={{ backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: 'sans-serif' }}>
       
@@ -457,7 +445,6 @@ function FirmalarRehberi() {
 
       <div style={{ maxWidth: '1100px', margin: '-2.5rem auto 0', padding: '0 1rem 4rem' }}>
         
-        {/* ARAMA FORMU */}
         <form onSubmit={handleSearch} style={{ backgroundColor: '#ffffff', padding: '0.75rem', borderRadius: '0.75rem', boxShadow: '0 15px 25px -5px rgba(0, 0, 0, 0.08)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem', alignItems: 'center' }}>
           <div style={{ flex: 2, minWidth: '200px' }}>
             <input 
@@ -471,12 +458,28 @@ function FirmalarRehberi() {
               type="text" placeholder="Şehir Filtresi..." value={sehirInput} onChange={(e) => setSehirInput(e.target.value)}
             />
           </div>
+          <div style={{ flex: 1, minWidth: '180px' }}>
+            <select 
+              value={hizmetInput} 
+              onChange={(e) => setHizmetInput(e.target.value)}
+              style={{ width: '100%', padding: '0.85rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.5rem', color: '#000000', fontWeight: 'bold', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
+            >
+              <option value="">Tüm Hizmet Çeşitleri</option>
+              <option value="oto_kurtarici">🚨 Oto Kurtarıcı / Yol Yardım</option>
+              <option value="oto_tasiyici">⛓️ Oto Taşıyıcı / Evden Eve</option>
+              <option value="sehirlerarasi_nakliye">🚛 Şehirlerarası Nakliye</option>
+              <option value="parsiyel_tasima">📦 Parsiyel Taşıma</option>
+              <option value="komple_tasima">🚚 Komple Taşıma</option>
+              <option value="depolama_hizmeti">🏢 Depolama Hizmeti</option>
+              <option value="forklift_hizmeti">🚜 Forklift Hizmeti</option>
+              <option value="vinc_hizmeti">🏗️ Vinç Hizmeti</option>
+            </select>
+          </div>
           <button type="submit" style={{ backgroundColor: '#1e3a5f', color: '#ffffff', padding: '0.85rem 1.5rem', borderRadius: '#0.5rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Search size={16} /> SORGULA
           </button>
         </form>
 
-        {/* REHBER KARTLARI */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '4rem', fontWeight: 'bold', color: '#1e3a5f', fontSize: '0.9rem' }}>Veriler Alınıyor...</div>
         ) : (
@@ -511,7 +514,6 @@ function FirmalarRehberi() {
         )}
       </div>
 
-      {/* YENİ FİRMA EKLEME FORMU - TÜM YAZI SOLUKLUK SORUNLARI GİDERİLDİ */}
       {firmaEkleModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
           <div style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '550px', borderRadius: '1rem', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
@@ -586,23 +588,72 @@ function FirmalarRehberi() {
                 )}
               </div>
 
-              {/* HİZMET CHECKBOXLARI */}
+              {/* HİZMET KARTI SEÇİCİLER - ALL 8 OPTIONS */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', color: '#1e3a5f', marginBottom: '0.5rem' }}>Verilen Hizmet Çeşitleri</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', backgroundColor: '#f8fafc', padding: '0.85rem', borderRadius: '0.5rem', border: '2px solid #cbd5e1' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                   {[
-                    { key: 'sehirlerarasi_nakliye', etiket: 'Şehirlerarası Nakliye' },
-                    { key: 'parsiyel_tasima', etiket: 'Parsiyel Taşıma' },
-                    { key: 'komple_tasima', etiket: 'Komple Taşıma' },
-                    { key: 'depolama_hizmeti', etiket: 'Depolama Hizmeti' },
-                    { key: 'forklift_hizmeti', etiket: 'Forklift Hizmeti' },
-                    { key: 'vinc_hizmeti', etiket: 'Vinç Hizmeti' },
-                  ].map((item) => (
-                    <label key={item.key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 'bold', color: '#334155', cursor: 'pointer' }}>
-                      <input type="checkbox" name={item.key} checked={yeniFirma[item.key]} onChange={handleInputChange} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
-                      {item.etiket}
-                    </label>
-                  ))}
+                    { key: 'oto_kurtarici', etiket: 'Oto Kurtarıcı / Yol Yardım', emoji: '🚨' },
+                    { key: 'oto_tasiyici', etiket: 'Oto Taşıyıcı / Evden Eve', emoji: '⛓️' },
+                    { key: 'sehirlerarasi_nakliye', etiket: 'Şehirlerarası Nakliye', emoji: '🚛' },
+                    { key: 'parsiyel_tasima', etiket: 'Parsiyel Taşıma', emoji: '📦' },
+                    { key: 'komple_tasima', etiket: 'Komple Taşıma', emoji: '🚚' },
+                    { key: 'depolama_hizmeti', etiket: 'Depolama Hizmeti', emoji: '🏢' },
+                    { key: 'forklift_hizmeti', etiket: 'Forklift Hizmeti', emoji: '🚜' },
+                    { key: 'vinc_hizmeti', etiket: 'Vinç Hizmeti', emoji: '🏗️' },
+                  ].map((item) => {
+                    const aktif = yeniFirma[item.key];
+                    return (
+                      <div
+                        key={item.key}
+                        onClick={() => setYeniFirma(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                        style={{
+                          border: aktif ? '2px solid #f58220' : '2px solid #e2e8f0',
+                          backgroundColor: aktif ? '#1e3a5f' : '#f8fafc',
+                          borderRadius: '0.75rem',
+                          padding: '0.75rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          transition: 'all 0.15s ease',
+                          userSelect: 'none',
+                          position: 'relative',
+                        }}
+                      >
+                        {aktif && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '6px',
+                            right: '6px',
+                            width: '16px',
+                            height: '16px',
+                            backgroundColor: '#f58220',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '10px',
+                            color: '#ffffff',
+                            fontWeight: '900',
+                            lineHeight: 1,
+                          }}>✓</div>
+                        )}
+                        <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>{item.emoji}</span>
+                        <span style={{
+                          fontSize: '0.72rem',
+                          fontWeight: '900',
+                          color: aktif ? '#ffffff' : '#1e3a5f',
+                          textAlign: 'center',
+                          textTransform: 'uppercase',
+                          letterSpacing: '-0.01em',
+                          lineHeight: '1.2',
+                        }}>{item.etiket}</span>
+                        <input type="checkbox" name={item.key} checked={aktif} onChange={handleInputChange} style={{ display: 'none' }} />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
