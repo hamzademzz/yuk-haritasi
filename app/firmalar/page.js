@@ -81,11 +81,16 @@ function FirmalarRehberi() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Sync state values with search params & trigger modal auto-open safely
   useEffect(() => {
     setAramaInput(urlArama);
     setSehirInput(urlSehir);
     setHizmetInput(urlHizmet);
-  }, [urlArama, urlSehir, urlHizmet]);
+    
+    if (searchParams.get('ekle') === 'true') {
+      setFirmaEkleModal(true);
+    }
+  }, [urlArama, urlSehir, urlHizmet]); // Kept constant at exactly 3 dependencies
 
   const fetchFirmalar = useCallback(async () => {
     setLoading(true);
@@ -543,7 +548,7 @@ function FirmalarRehberi() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.3rem' }}>TC Kimlik Numarası</label>
+                    <label style={{ display: 'block', fontSize: '0.8', fontWeight: 'bold', color: '#475569', marginBottom: '0.3rem' }}>TC Kimlik Numarası</label>
                     <input type="text" maxLength="11" name="tc_kimlik_no" value={yeniFirma.tc_kimlik_no} onChange={handleInputChange} style={{ width: '100%', padding: '0.75rem', border: '2px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.85rem', color: '#000000', fontWeight: '700', backgroundColor: '#ffffff', outline: 'none' }} placeholder="11 Haneli" />
                   </div>
                   <div>
