@@ -445,40 +445,49 @@ function FirmalarRehberi() {
 
       <div style={{ maxWidth: '1100px', margin: '-2.5rem auto 0', padding: '0 1rem 4rem' }}>
         
-        <form onSubmit={handleSearch} style={{ backgroundColor: '#ffffff', padding: '0.75rem', borderRadius: '0.75rem', boxShadow: '0 15px 25px -5px rgba(0, 0, 0, 0.08)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem', alignItems: 'center' }}>
-          <div style={{ flex: 2, minWidth: '200px' }}>
+        <form onSubmit={handleSearch} style={{ backgroundColor: '#ffffff', padding: '0.75rem', borderRadius: '0.75rem', boxShadow: '0 15px 25px -5px rgba(0, 0, 0, 0.08)', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.5rem', alignItems: 'center' }}>
+          <div style={{ flex: '1 1 100%', minWidth: '200px', mdFlex: '2' }} className="responsive-field-search">
             <input 
               style={{ width: '100%', padding: '0.85rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.5rem', color: '#000000', fontWeight: 'bold', fontSize: '0.85rem', outline: 'none' }}
               type="text" placeholder="Firma Adı ile Ara..." value={aramaInput} onChange={(e) => setAramaInput(e.target.value)}
             />
           </div>
-          <div style={{ flex: 1, minWidth: '150px' }}>
+          <div style={{ flex: '1 1 calc(50% - 0.375rem)', minWidth: '140px' }}>
             <input 
               style={{ width: '100%', padding: '0.85rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.5rem', color: '#000000', fontWeight: 'bold', fontSize: '0.85rem', outline: 'none' }}
               type="text" placeholder="Şehir Filtresi..." value={sehirInput} onChange={(e) => setSehirInput(e.target.value)}
             />
           </div>
-          <div style={{ flex: 1, minWidth: '180px' }}>
+          <div style={{ flex: '1 1 calc(50% - 0.375rem)', minWidth: '140px' }}>
             <select 
               value={hizmetInput} 
               onChange={(e) => setHizmetInput(e.target.value)}
               style={{ width: '100%', padding: '0.85rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.5rem', color: '#000000', fontWeight: 'bold', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
             >
-              <option value="">Tüm Hizmet Çeşitleri</option>
-              <option value="oto_kurtarici">🚨 Oto Kurtarıcı / Yol Yardım</option>
-              <option value="oto_tasiyici">⛓️ Oto Taşıyıcı / Evden Eve</option>
-              <option value="sehirlerarasi_nakliye">🚛 Şehirlerarası Nakliye</option>
-              <option value="parsiyel_tasima">📦 Parsiyel Taşıma</option>
-              <option value="komple_tasima">🚚 Komple Taşıma</option>
-              <option value="depolama_hizmeti">🏢 Depolama Hizmeti</option>
-              <option value="forklift_hizmeti">🚜 Forklift Hizmeti</option>
-              <option value="vinc_hizmeti">🏗️ Vinç Hizmeti</option>
+              <option value="">Tüm Hizmetler</option>
+              <option value="oto_kurtarici">🚨 Oto Kurtarıcı</option>
+              <option value="oto_tasiyici">⛓️ Oto Taşıyıcı</option>
+              <option value="sehirlerarasi_nakliye">🚛 Şehirlerarası</option>
+              <option value="parsiyel_tasima">📦 Parsiyel</option>
+              <option value="komple_tasima">🚚 Komple</option>
+              <option value="depolama_hizmeti">🏢 Depolama</option>
+              <option value="forklift_hizmeti">🚜 Forklift</option>
+              <option value="vinc_hizmeti">🏗️ Vinç</option>
             </select>
           </div>
-          <button type="submit" style={{ backgroundColor: '#1e3a5f', color: '#ffffff', padding: '0.85rem 1.5rem', borderRadius: '#0.5rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button type="submit" style={{ flex: '1 1 100%', backgroundColor: '#1e3a5f', color: '#ffffff', padding: '0.85rem 1.5rem', borderRadius: '0.5rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
             <Search size={16} /> SORGULA
           </button>
         </form>
+
+        {/* Global CSS Inject to optimize desktop view layout over strict style rules */}
+        <style jsx global>{`
+          @media (min-width: 768px) {
+            .responsive-field-search { flex: 2 !important; }
+            form > div { flex: 1 !important; }
+            form > button { flex: none !important; width: auto !important; }
+          }
+        `}</style>
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: '4rem', fontWeight: 'bold', color: '#1e3a5f', fontSize: '0.9rem' }}>Veriler Alınıyor...</div>
