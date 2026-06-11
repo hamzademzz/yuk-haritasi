@@ -1,7 +1,7 @@
 "use client";
 import React, { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Truck, MapPin, Calendar, Weight, User, Phone, ArrowLeft, Search, Navigation, Filter, X, PlusCircle, ChevronRight } from 'lucide-react';
+import { Truck, MapPin, Calendar, Weight, User, Phone, ArrowLeft, Search, Navigation, Filter, X, PlusCircle, ChevronRight, Lock, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase'; 
 
@@ -17,6 +17,9 @@ function YukListesi() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  
+  // Custom Professional Auth Warning Modal State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Yeni Yük Form State
   const [formData, setFormData] = useState({
@@ -32,15 +35,39 @@ function YukListesi() {
     is_active: true
   });
 
-  // AUTO-OPEN MODAL LOGIC
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('ekle') === 'true') {
-      setIsModalOpen(true);
-      const newUrl = window.location.pathname;
-      window.history.replaceState(null, '', newUrl);
+  // CHECK AUTHENTICATION AND OPEN MODAL
+  const handleOpenModal = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      setIsAuthModalOpen(true);
+      return;
     }
-  }, []);
+    
+    setIsModalOpen(true);
+  };
+
+  // AUTO-OPEN MODAL LOGIC WITH PROFESSIONAL AUTH CHECK
+  useEffect(() => {
+    const checkAuthAndParam = async () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('ekle') === 'true') {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Clean URL parameter safely
+        const newUrl = window.location.pathname;
+        window.history.replaceState(null, '', newUrl);
+
+        if (!session) {
+          setIsAuthModalOpen(true);
+        } else {
+          setIsModalOpen(true);
+        }
+      }
+    };
+
+    checkAuthAndParam();
+  }, [router]);
 
   const fetchYukler = useCallback(async () => {
     setLoading(true);
@@ -82,6 +109,14 @@ function YukListesi() {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setIsModalOpen(false);
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     setFormLoading(true);
     try {
       const { error } = await supabase
@@ -125,7 +160,7 @@ function YukListesi() {
               </p>
             </div>
             <button 
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleOpenModal}
               style={{ backgroundColor: '#f58220', color: '#ffffff', padding: '1rem 1.5rem', borderRadius: '0.75rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <PlusCircle size={18} /> YÜK İLANI VER
@@ -262,10 +297,51 @@ function YukListesi() {
         )}
       </div>
 
+      {/* FULLY RESPONSIVE CENTERED AUTHENTICATION OVERLAY MODAL */}
+      {isAuthModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(30, 58, 95, 0.85)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(4px)' }}>
+          <div style={{ backgroundColor: '#ffffff', width: '90%', maxWidth: '440px', borderRadius: '1.5rem', padding: '2.5rem', position: 'relative', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+            <button onClick={() => setIsAuthModalOpen(false)} style={{ position: 'absolute', right: '1.25rem', top: '1.25rem', border: 'none', background: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+              <X size={22} />
+            </button>
+            
+            <div style={{ width: '4rem', height: '4rem', backgroundColor: '#fff7ed', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#f58220', border: '1px solid #ffedd5' }}>
+              <Lock size={28} />
+            </div>
+
+            <h3 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#1e3a5f', margin: '0 0 0.5rem', textTransform: 'uppercase', fontStyle: 'italic', letterSpacing: '-0.01em' }}>
+              OTURUM AÇMANIZ GEREKLİ
+            </h3>
+            
+            <p style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '600', lineHeight: '1.5', margin: '0 0 2rem' }}>
+              Yük ilanı eklemek ve lojistik ağımıza katılmak için lütfen hesabınıza giriş yapın.
+            </p>
+
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              <button 
+                onClick={() => {
+                  setIsAuthModalOpen(false);
+                  router.push('/login');
+                }}
+                style={{ backgroundColor: '#1e3a5f', color: '#ffffff', padding: '1rem', borderRadius: '0.75rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 10px 15px -3px rgba(30, 58, 95, 0.2)' }}
+              >
+                <LogIn size={18} /> GİRİŞ YAP / ÜYE OL
+              </button>
+              <button 
+                onClick={() => setIsAuthModalOpen(false)}
+                style={{ backgroundColor: '#f8fafc', color: '#64748b', padding: '1rem', borderRadius: '0.75rem', fontWeight: 'bold', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '0.9rem' }}
+              >
+                VAZGEÇ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* YÜK EKLE MODAL */}
       {isModalOpen && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(30, 58, 95, 0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ backgroundColor: '#fff', width: '100%', maxWidth: '600px', borderRadius: '1.5rem', padding: '2rem', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ backgroundColor: '#fff', width: '90%', maxWidth: '600px', borderRadius: '1.5rem', padding: '2rem', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
             <button onClick={() => setIsModalOpen(false)} style={{ position: 'absolute', right: '1.5rem', top: '1.5rem', border: 'none', background: 'none', cursor: 'pointer', color: '#64748b' }}>
               <X size={24} />
             </button>

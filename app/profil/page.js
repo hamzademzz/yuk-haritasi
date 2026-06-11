@@ -24,15 +24,13 @@ export default function ProfilePage() {
   const [mesaj, setMesaj] = useState({ tip: '', icerik: '' });
   const [aktifTab, setProfilTab] = useState("genel");
 
-  // Mock data placeholders mirroring your schema definitions
-  const [userStats, setUserStats] = useState({ ilanlar: 3, teklifler: 12, onayli: true });
-  const [aktifIlanlar, setAktifIlanlar] = useState([
-    { id: 1, nereden: "İstanbul", nereye: "Ankara", tur: "Paletli Yük", tarih: "24.05.2026", durum: "Aktif" },
-    { id: 2, nereden: "İzmir", nereye: "Bursa", tur: "Kuru Yük", tarih: "22.05.2026", durum: "Beklemede" }
-  ]);
+  // Dynamic live tracking data
+  const [realAracIlanlari, setRealAracIlanlari] = useState([]);
+  const [realYukIlanlari, setRealYukIlanlari] = useState([]);
+  const [userStats, setUserStats] = useState({ ilanlar: 0, teklifler: 0, onayli: true });
 
   useEffect(() => {
-    const profilGetir = async () => {
+    const profilAndIlanlariGetir = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user ?? null;
 
@@ -43,8 +41,8 @@ export default function ProfilePage() {
 
       setKullanici(user);
 
-      // Fetch dynamic profile details tied to auth.users.id
-      const { data: profile, error } = await supabase
+      // 1. Get profile data
+      const { data: profile } = await supabase
         .from('profiles')
         .select('first_name, last_name, phone, rol')
         .eq('id', user.id)
@@ -58,10 +56,40 @@ export default function ProfilePage() {
           rol: profile.rol || 'Firma / Yük Sahibi'
         });
       }
+
+      // 2. Fetch real vehicle listings (araclar table)
+      const { data: araclarData, error: araclarError } = await supabase
+        .from('araclar')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('id', { ascending: false });
+
+      if (!araclarError && araclarData) {
+        setRealAracIlanlari(araclarData);
+      }
+
+      // 3. Fetch real freight listings (yuk_ilanlari table)
+      const { data: yuklerData, error: yuklerError } = await supabase
+        .from('yuk_ilanlari')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('id', { ascending: false });
+
+      if (!yuklerError && yuklerData) {
+        setRealYukIlanlari(yuklerData);
+      }
+
+      // Calculate state values dynamically
+      const totalIlanCount = (araclarData?.length || 0) + (yuklerData?.length || 0);
+      setUserStats(prev => ({
+        ...prev,
+        ilanlar: totalIlanCount
+      }));
+
       setYukleniyor(false);
     };
 
-    profilGetir();
+    profilAndIlanlariGetir();
   }, [router]);
 
   const handleProfilGuncelle = async (e) => {
@@ -182,7 +210,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* SUB-NAVIGATION CONTROL TABS - PRO TOUCH OPTIMIZED */}
+        {/* SUB-NAVIGATION CONTROL TABS */}
         <div className="flex border-b border-gray-200 mb-4 sm:mb-6 overflow-x-auto no-scrollbar scroll-smooth">
           <button 
             onClick={() => setProfilTab("genel")} 
@@ -194,7 +222,7 @@ export default function ProfilePage() {
             onClick={() => setProfilTab("ilanlarim")} 
             className={`pb-3 px-3 sm:px-4 text-xs font-black tracking-tight uppercase border-b-2 whitespace-nowrap transition-all ${aktifTab === 'ilanlarim' ? 'border-[#f58220] text-[#f58220]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
           >
-            Aktif İlanlarım ({aktifIlanlar.length})
+            Aktif İlanlarım ({userStats.ilanlar})
           </button>
           <button 
             onClick={() => setProfilTab("teklifler")} 
@@ -304,11 +332,12 @@ export default function ProfilePage() {
           )}
 
           {aktifTab === "ilanlarim" && (
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
+            <div className="space-y-8">
+              {/* HEADER CONTAINER */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
                   <h3 className="text-base font-black text-[#1e3a5f] uppercase tracking-tight italic">Yayınladığınız İlanlar</h3>
-                  <p className="text-xs font-bold text-gray-400 mt-0.5 uppercase tracking-widest">Güncel lojistik taleplerinizin durumunu ve detaylarını izleyin.</p>
+                  <p className="text-xs font-bold text-gray-400 mt-0.5 uppercase tracking-widest">Sistemdeki güncel lojistik talepleriniz ve aktif portföyünüz.</p>
                 </div>
                 <Link href="/ilan-ver" className="w-full sm:w-auto">
                   <button className="w-full sm:w-auto bg-[#f58220] text-white px-4 py-3 rounded-xl font-black text-xs uppercase flex items-center justify-center gap-1 hover:bg-[#e4761a] transition shadow-md">
@@ -317,28 +346,80 @@ export default function ProfilePage() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {aktifIlanlar.map((ilan) => (
-                  <div key={ilan.id} className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="text-sm font-black text-[#1e3a5f]">{ilan.nereden} → {ilan.nereye}</span>
-                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${ilan.durum === 'Aktif' ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
-                          {ilan.durum}
-                        </span>
+              {/* CATEGORY 1: YÜK İLANLARI (TABLE: yuk_ilanlari) */}
+              <div>
+                <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
+                  <Box size={18} className="text-[#f58220]" />
+                  <h4 className="text-sm font-black text-[#1e3a5f] uppercase tracking-tight">Yük İlanlarım ({realYukIlanlari.length})</h4>
+                </div>
+
+                {realYukIlanlari.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {realYukIlanlari.map((ilan) => (
+                      <div key={ilan.id} className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                        <div>
+                          <div className="flex justify-between items-center mb-3">
+                            <span className="text-sm font-black text-[#1e3a5f]">
+                              {ilan.nereden || ilan.yukleme_yeri || 'Belirtilmedi'} → {ilan.nereye || ilan.teslim_yeri || 'Belirtilmedi'}
+                            </span>
+                            <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-50 text-[#f58220] border border-orange-100">
+                              {ilan.durum || 'Aktif'}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs font-bold text-gray-500 mb-4">
+                            <div><span className="text-[10px] block text-gray-400 font-normal uppercase">Yük Tipi</span>{ilan.yuk_tipi || ilan.arac_tipi || 'Kuru Yük'}</div>
+                            <div><span className="text-[10px] block text-gray-400 font-normal uppercase">Tarih</span>{ilan.olusturulma_tarihi ? new Date(ilan.olusturulma_tarihi).toLocaleDateString('tr-TR') : '—'}</div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 pt-3 border-t border-gray-50">
+                          <button className="flex-1 py-2.5 bg-gray-50 text-gray-700 font-black text-[10px] rounded-xl border border-gray-100 hover:bg-gray-100 transition uppercase">Düzenle</button>
+                          <button className="flex-1 py-2.5 bg-red-50 text-red-500 font-black text-[10px] rounded-xl border border-red-100 hover:bg-red-100 transition uppercase">Kaldır</button>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs font-bold text-gray-500 mb-4">
-                        <div><span className="text-[10px] block text-gray-400 font-normal uppercase">Yük Tipi</span>{ilan.tur}</div>
-                        <div><span className="text-[10px] block text-gray-400 font-normal uppercase">Yayın Tarihi</span>{ilan.tarih}</div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 pt-3 border-t border-gray-50">
-                      <button className="flex-1 py-2.5 bg-gray-50 text-gray-700 font-black text-[10px] rounded-xl border border-gray-100 hover:bg-gray-100 transition uppercase">Düzenle</button>
-                      <button className="flex-1 py-2.5 bg-red-50 text-red-500 font-black text-[10px] rounded-xl border border-red-100 hover:bg-red-100 transition uppercase">Kaldır</button>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <p className="text-xs font-bold text-gray-400 bg-white border border-dashed rounded-xl p-6 text-center">Yayınlanmış aktif yük ilanınız bulunmuyor.</p>
+                )}
               </div>
+
+              {/* CATEGORY 2: ARAÇ İLANLARI (TABLE: araclar) */}
+              <div>
+                <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
+                  <Truck size={18} className="text-[#1e3a5f]" />
+                  <h4 className="text-sm font-black text-[#1e3a5f] uppercase tracking-tight">Araç İlanlarım ({realAracIlanlari.length})</h4>
+                </div>
+
+                {realAracIlanlari.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {realAracIlanlari.map((ilan) => (
+                      <div key={ilan.id} className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                        <div>
+                          <div className="flex justify-between items-center mb-3">
+                            <span className="text-sm font-black text-gray-800 flex items-center gap-1">
+                              <MapPin size={14} className="text-[#f58220]" /> {ilan.mevcut_konum_sehir}
+                            </span>
+                            <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-green-50 text-green-600 border border-green-100">
+                              {ilan.is_active !== false ? 'Müsait' : 'Pasif'}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs font-bold text-gray-500 mb-4">
+                            <div><span className="text-[10px] block text-gray-400 font-normal uppercase">Araç Tipi</span>{ilan.arac_tipi}</div>
+                            <div><span className="text-[10px] block text-gray-400 font-normal uppercase">Açıklama</span><span className="truncate block max-w-[140px]">{ilan.aciklama || 'Belirtilmedi'}</span></div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 pt-3 border-t border-gray-50">
+                          <button className="flex-1 py-2.5 bg-gray-50 text-gray-700 font-black text-[10px] rounded-xl border border-gray-100 hover:bg-gray-100 transition uppercase">Düzenle</button>
+                          <button className="flex-1 py-2.5 bg-red-50 text-red-500 font-black text-[10px] rounded-xl border border-red-100 hover:bg-red-100 transition uppercase">Kaldır</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs font-bold text-gray-400 bg-white border border-dashed rounded-xl p-6 text-center">Yayınlanmış aktif araç ilanınız bulunmuyor.</p>
+                )}
+              </div>
+
             </div>
           )}
 

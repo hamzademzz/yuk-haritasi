@@ -5,7 +5,7 @@ import {
   Building2, ArrowLeft, Search, MapPin, Phone, MessageSquare, 
   Mail, Star, CheckCircle2, QrCode, ArrowRight, Grid, PlusCircle,
   FileText, Image as ImageIcon, MessageCircle, Truck, Package, 
-  Warehouse, Anchor, Construction, X, ChevronDown, ChevronUp, Lock
+  Warehouse, Anchor, Construction, X, ChevronDown, ChevronUp, Lock, LogIn
 } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
@@ -43,6 +43,9 @@ function FirmalarRehberi() {
   const [sehirleriGoster, setSehirleriGoster] = useState(false);
   const [firmaEkleModal, setFirmaEkleModal] = useState(false);
   const [sehirDropdownAcik, setSehirDropdownAcik] = useState(false);
+  
+  // Custom Professional Auth Warning Modal State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const [yeniFirma, setYeniFirma] = useState({
     firma_adi: '',
@@ -61,12 +64,12 @@ function FirmalarRehberi() {
     vergi_no: '',
     oto_kurtarici: false,
     oto_tasiyici: false,
-    sehirlerarasi_nakliye: false,
-    parsiyel_tasima: false,
-    komple_tasima: false,
-    depolama_hizmeti: false,
-    forklift_hizmeti: false,
-    vinc_hizmeti: false
+    vinc_hizmetleri: false,
+    forklift_hizmetleri: false,
+    depolama: false,
+    is_makinalari: false,
+    paketleme: false,
+    parsiyel_tasima: false
   });
 
   useEffect(() => {
@@ -81,16 +84,28 @@ function FirmalarRehberi() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Sync state values with search params & trigger modal auto-open safely
+  // Sync state values with search params & trigger professional auth check
   useEffect(() => {
     setAramaInput(urlArama);
     setSehirInput(urlSehir);
     setHizmetInput(urlHizmet);
     
     if (searchParams.get('ekle') === 'true') {
-      setFirmaEkleModal(true);
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        // Clean URL parameters cleanly
+        const params = new URLSearchParams(window.location.search);
+        params.delete('ekle');
+        const nextUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
+        window.history.replaceState(null, '', nextUrl);
+
+        if (!session) {
+          setIsAuthModalOpen(true);
+        } else {
+          setFirmaEkleModal(true);
+        }
+      });
     }
-  }, [urlArama, urlSehir, urlHizmet]); // Kept constant at exactly 3 dependencies
+  }, [urlArama, urlSehir, urlHizmet, searchParams]);
 
   const fetchFirmalar = useCallback(async () => {
     setLoading(true);
@@ -174,8 +189,25 @@ function FirmalarRehberi() {
     });
   };
 
+  const handleFirmaEkleTikla = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setFirmaEkleModal(true);
+  };
+
   const handleFirmaKaydet = async (e) => {
     e.preventDefault();
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setFirmaEkleModal(false);
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     try {
       const generatedUyeNo = "YH-" + Math.floor(1000000 + Math.random() * 9000000);
       const finalHizmetBolgeleri = yeniFirma.hizmet_bolgeleri.join(', ');
@@ -195,8 +227,8 @@ function FirmalarRehberi() {
           uye_no: '', puan: '4.8', yorum_sayisi: '0', is_active: true,
           tc_kimlik_no: '', vergi_no: '',
           oto_kurtarici: false, oto_tasiyici: false,
-          sehirlerarasi_nakliye: false, parsiyel_tasima: false, komple_tasima: false,
-          depolama_hizmeti: false, forklift_hizmeti: false, vinc_hizmeti: false
+          vinc_hizmetleri: false, forklift_hizmetleri: false, depolama: false,
+          is_makinalari: false, paketleme: false, parsiyel_tasima: false
         });
         fetchFirmalar();
       } else {
@@ -343,7 +375,7 @@ function FirmalarRehberi() {
                       alt="Harita" 
                       style={{ width: '95%', height: '95%', objectFit: 'contain', filter: 'invert(29%) sepia(87%) saturate(2235%) hue-rotate(212deg) brightness(96%) contrast(97%)' }} 
                     />
-                    <span style={{ position: 'absolute', bottom: '0.5rem', left: '0.5rem', backgroundColor: '#ffffff', padding: '0.25rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.7rem', fontWeight: '900', color: '#1e3a5f', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <span style={{ position: 'absolute', bottom: '0.5rem', left: '0.5rem', backgroundColor: '#ffffff', padding: '0.25rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.7', fontWeight: '900', color: '#1e3a5f', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       <CheckCircle2 size={12} style={{ color: '#3b82f6' }} /> Türkiye Geneli
                     </span>
                   </div>
@@ -393,12 +425,12 @@ function FirmalarRehberi() {
                   {[
                     { key: 'oto_kurtarici', ad: "Oto Kurtarıcı", ikon: <Construction size={24} /> },
                     { key: 'oto_tasiyici', ad: "Oto Taşıyıcı", ikon: <Truck size={24} /> },
-                    { key: 'sehirlerarasi_nakliye', ad: "Şehirlerarası Nakliye", ikon: <Truck size={24} /> },
+                    { key: 'vinc_hizmetleri', ad: "Vinç Hizmetleri", ikon: <Anchor size={24} /> },
+                    { key: 'forklift_hizmetleri', ad: "Forklift Hizmetleri", ikon: <Construction size={24} /> },
+                    { key: 'depolama', ad: "Depolama", ikon: <Warehouse size={24} /> },
+                    { key: 'is_makinalari', ad: "İş Makinaları", ikon: <Construction size={24} /> },
+                    { key: 'paketleme', ad: "Paketleme", ikon: <Package size={24} /> },
                     { key: 'parsiyel_tasima', ad: "Parsiyel Taşıma", ikon: <Package size={24} /> },
-                    { key: 'komple_tasima', ad: "Komple Taşıma", ikon: <Truck size={24} /> },
-                    { key: 'depolama_hizmeti', ad: "Depolama Hizmeti", ikon: <Warehouse size={24} /> },
-                    { key: 'forklift_hizmeti', ad: "Forklift Hizmeti", ikon: <Construction size={24} /> },
-                    { key: 'vinc_hizmeti', ad: "Vinç Hizmeti", ikon: <Anchor size={24} /> },
                   ].map((item, idx) => {
                     const aktif = !!seciliFirma[item.key];
                     return (
@@ -443,7 +475,7 @@ function FirmalarRehberi() {
           </div>
 
           <button 
-            onClick={() => setFirmaEkleModal(true)}
+            onClick={handleFirmaEkleTikla}
             style={{ backgroundColor: '#f58220', color: '#ffffff', border: 'none', padding: '0.75rem 1.25rem', borderRadius: '0.5rem', fontWeight: 'bold', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 10px rgba(245,130,32,0.3)' }}
           >
             <PlusCircle size={16} /> FİRMA EKLE
@@ -475,12 +507,12 @@ function FirmalarRehberi() {
               <option value="">Tüm Hizmetler</option>
               <option value="oto_kurtarici">🚨 Oto Kurtarıcı</option>
               <option value="oto_tasiyici">⛓️ Oto Taşıyıcı</option>
-              <option value="sehirlerarasi_nakliye">🚛 Şehirlerarası</option>
-              <option value="parsiyel_tasima">📦 Parsiyel</option>
-              <option value="komple_tasima">🚚 Komple</option>
-              <option value="depolama_hizmeti">🏢 Depolama</option>
-              <option value="forklift_hizmeti">🚜 Forklift</option>
-              <option value="vinc_hizmeti">🏗️ Vinç</option>
+              <option value="vinc_hizmetleri">🏗️ Vinç Hizmetleri</option>
+              <option value="forklift_hizmetleri">🚜 Forklift Hizmetleri</option>
+              <option value="depolama">🏢 Depolama</option>
+              <option value="is_makinalari">👷 İş Makinaları</option>
+              <option value="paketleme">📦 Paketleme</option>
+              <option value="parsiyel_tasima">🚛 Parsiyel Taşıma</option>
             </select>
           </div>
           <button type="submit" style={{ flex: '1 1 100%', backgroundColor: '#1e3a5f', color: '#ffffff', padding: '0.85rem 1.5rem', borderRadius: '0.5rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
@@ -530,9 +562,50 @@ function FirmalarRehberi() {
         )}
       </div>
 
+      {/* FULLY RESPONSIVE CENTERED AUTHENTICATION OVERLAY MODAL */}
+      {isAuthModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(30, 58, 95, 0.85)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(4px)' }}>
+          <div style={{ backgroundColor: '#ffffff', width: '90%', maxWidth: '440px', borderRadius: '1.5rem', padding: '2.5rem', position: 'relative', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+            <button onClick={() => setIsAuthModalOpen(false)} style={{ position: 'absolute', right: '1.25rem', top: '1.25rem', border: 'none', background: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+              <X size={22} />
+            </button>
+            
+            <div style={{ width: '4rem', height: '4rem', backgroundColor: '#fff7ed', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#f58220', border: '1px solid #ffedd5' }}>
+              <Lock size={28} />
+            </div>
+
+            <h3 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#1e3a5f', margin: '0 0 0.5rem', textTransform: 'uppercase', fontStyle: 'italic', letterSpacing: '-0.01em' }}>
+              OTURUM AÇMANIZ GEREKLİ
+            </h3>
+            
+            <p style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '600', lineHeight: '1.5', margin: '0 0 2rem' }}>
+              Firma rehberine kayıt eklemek ve lojistik ağımıza katılmak için lütfen hesabınıza giriş yapın.
+            </p>
+
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              <button 
+                onClick={() => {
+                  setIsAuthModalOpen(false);
+                  router.push('/login');
+                }}
+                style={{ backgroundColor: '#1e3a5f', color: '#ffffff', padding: '1rem', borderRadius: '0.75rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 10px 15px -3px rgba(30, 58, 95, 0.2)' }}
+              >
+                <LogIn size={18} /> GİRİŞ YAP / ÜYE OL
+              </button>
+              <button 
+                onClick={() => setIsAuthModalOpen(false)}
+                style={{ backgroundColor: '#f8fafc', color: '#64748b', padding: '1rem', borderRadius: '0.75rem', fontWeight: 'bold', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '0.9rem' }}
+              >
+                VAZGEÇ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {firmaEkleModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
-          <div style={{ backgroundColor: '#ffffff', width: '100%', maxWidth: '550px', borderRadius: '1rem', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+          <div style={{ backgroundColor: '#ffffff', width: '90%', maxWidth: '550px', borderRadius: '1rem', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
             <div style={{ padding: '1.25rem', backgroundColor: '#1e3a5f', color: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '900' }}>Rehbere Firma Kaydet</h2>
               <button onClick={() => setFirmaEkleModal(false)} style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', padding: '0.25rem' }}><X size={20} /></button>
@@ -548,7 +621,7 @@ function FirmalarRehberi() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.8', fontWeight: 'bold', color: '#475569', marginBottom: '0.3rem' }}>TC Kimlik Numarası</label>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.3rem' }}>TC Kimlik Numarası</label>
                     <input type="text" maxLength="11" name="tc_kimlik_no" value={yeniFirma.tc_kimlik_no} onChange={handleInputChange} style={{ width: '100%', padding: '0.75rem', border: '2px solid #cbd5e1', borderRadius: '0.5rem', fontSize: '0.85rem', color: '#000000', fontWeight: '700', backgroundColor: '#ffffff', outline: 'none' }} placeholder="11 Haneli" />
                   </div>
                   <div>
@@ -623,19 +696,19 @@ function FirmalarRehberi() {
                 )}
               </div>
 
-              {/* HİZMET KARTI SEÇİCİLER - ALL 8 OPTIONS */}
+              {/* HİZMET KARTI SEÇİCİLER - IN SYNC WITH HOMEPAGE */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', color: '#1e3a5f', marginBottom: '0.5rem' }}>Verilen Hizmet Çeşitleri</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                   {[
-                    { key: 'oto_kurtarici', etiket: 'Oto Kurtarıcı / Yol Yardım', emoji: '🚨' },
-                    { key: 'oto_tasiyici', etiket: 'Oto Taşıyıcı / Evden Eve', emoji: '⛓️' },
-                    { key: 'sehirlerarasi_nakliye', etiket: 'Şehirlerarası Nakliye', emoji: '🚛' },
-                    { key: 'parsiyel_tasima', etiket: 'Parsiyel Taşıma', emoji: '📦' },
-                    { key: 'komple_tasima', etiket: 'Komple Taşıma', emoji: '🚚' },
-                    { key: 'depolama_hizmeti', etiket: 'Depolama Hizmeti', emoji: '🏢' },
-                    { key: 'forklift_hizmeti', etiket: 'Forklift Hizmeti', emoji: '🚜' },
-                    { key: 'vinc_hizmeti', etiket: 'Vinç Hizmeti', emoji: '🏗️' },
+                    { key: 'oto_kurtarici', etiket: 'Oto Kurtarıcı / 7/24 Yol Yardım', emoji: '🚨' },
+                    { key: 'oto_tasiyici', etiket: 'Oto Taşıyıcı / Evden Eve Nakliyat', emoji: '⛓️' },
+                    { key: 'vinc_hizmetleri', etiket: 'Vinç Hizmetleri / Vinç & Mobil Vinç', emoji: '🏗️' },
+                    { key: 'forklift_hizmetleri', etiket: 'Forklift Hizmetleri / Forklift & İstif', emoji: '🚜' },
+                    { key: 'depolama', etiket: 'Depolama / Depo & Antrepo', emoji: '🏢' },
+                    { key: 'is_makinalari', etiket: 'İş Makinaları / Ekskavatör & Dozer', emoji: '👷' },
+                    { key: 'paketleme', etiket: 'Paketleme / Ambalaj Hizmetleri', emoji: '📦' },
+                    { key: 'parsiyel_tasima', etiket: 'Parsiyel Taşıma / Komple Taşıma', emoji: '🚛' },
                   ].map((item) => {
                     const aktif = yeniFirma[item.key];
                     return (
