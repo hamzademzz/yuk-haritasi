@@ -1,7 +1,7 @@
 "use client";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Box, Building2, ChevronLeft, Home, LogOut, Plus, Truck, User } from 'lucide-react';
+import { Box, Building2, ChevronLeft, Home, LogOut, Plus, Route, Truck, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useOturum } from '../lib/hooks';
 
@@ -26,8 +26,9 @@ export async function cikisYap() {
 
 function Logo() {
   return (
-    <Link href="/" className="text-xl font-black tracking-tight text-white lg:text-2xl lg:text-navy">
-      Yük<span className="text-brand">Haritası</span>
+    <Link href="/" className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-white lg:text-navy">
+      <span className="grid size-8 place-items-center rounded-lg bg-brand text-white"><Route size={18} aria-hidden="true" /></span>
+      <span>Yük<span className="text-brand">Haritası</span></span>
     </Link>
   );
 }

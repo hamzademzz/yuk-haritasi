@@ -1,9 +1,9 @@
 "use client";
 import { useState } from 'react';
-import { Check, Lock, Search } from 'lucide-react';
+import { Check, Lock, Search, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { HIZMETLER, SEHIRLER } from '../../lib/constants';
-import { Alan } from '../../components/ui';
+import { Alan, HizmetIkonu } from '../../components/ui';
 
 function SehirSecici({ secili, onDegistir }) {
   const [arama, setArama] = useState('');
@@ -17,7 +17,7 @@ function SehirSecici({ secili, onDegistir }) {
       {secili.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1.5">
           {secili.map((s) => (
-            <button key={s} type="button" onClick={() => degistir(s)} aria-label={`${s} şehrini kaldır`} className="cursor-pointer rounded-full bg-navy px-3 py-1.5 text-xs font-bold text-white">{s} ✕</button>
+            <button key={s} type="button" onClick={() => degistir(s)} aria-label={`${s} şehrini kaldır`} className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-navy px-3 py-1.5 text-xs font-bold text-white">{s} <X size={12} /></button>
           ))}
         </div>
       )}
@@ -94,7 +94,7 @@ export default function FirmaFormu({ onKaydedildi, onGirisGerekli }) {
             const aktif = hizmetler.includes(h.anahtar);
             return (
               <button key={h.anahtar} type="button" aria-pressed={aktif} onClick={() => setHizmetler((l) => (aktif ? l.filter((x) => x !== h.anahtar) : [...l, h.anahtar]))} className={`flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border-2 p-2 text-left text-xs font-bold ${aktif ? 'border-brand bg-orange-50 text-navy' : 'border-slate-200 text-slate-600'}`}>
-                <span aria-hidden="true" className="text-xl">{h.ikon}</span>
+                <HizmetIkonu Ikon={h.Ikon} className="size-9" boyut={18} />
                 <span className="flex-1">{h.ad}</span>
                 {aktif && <Check size={16} className="shrink-0 text-brand" />}
               </button>

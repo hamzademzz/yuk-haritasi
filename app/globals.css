@@ -67,8 +67,13 @@ body {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-/* Ana sayfa duyuru şeridi */
-.kayan { animation: kayan 40s linear infinite; }
-@keyframes kayan {
-  to { transform: translateX(-50%); }
+/* Ana sayfa üst bölüm: ince ızgara ve yumuşak ışık */
+.hero-desen {
+  background-image:
+    radial-gradient(60% 55% at 85% 10%, rgb(245 130 32 / 0.18), transparent 70%),
+    radial-gradient(70% 70% at 10% 0%, rgb(59 130 246 / 0.18), transparent 70%),
+    linear-gradient(rgb(255 255 255 / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+  background-size: auto, auto, 44px 44px, 44px 44px;
 }
+

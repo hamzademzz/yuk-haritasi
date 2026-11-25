@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, Lock, Mail, MapPin, MessageCircle, Phone, Star } from 'lucide-react';
 import { useOturum } from '../../lib/hooks';
 import { HIZMETLER, whatsappLinki } from '../../lib/constants';
+import { HizmetIkonu } from '../../components/ui';
 
 export const VARSAYILAN_LOGO = 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=300';
 
@@ -87,7 +88,7 @@ export default function FirmaDetay({ firma, onGeri }) {
           {verilenHizmetler.length ? (
             <ul className="grid grid-cols-2 gap-2">
               {verilenHizmetler.map((h) => (
-                <li key={h.anahtar} className="flex items-center gap-2 rounded-xl bg-orange-50 p-3 text-xs font-bold text-navy"><span aria-hidden="true" className="text-xl">{h.ikon}</span>{h.ad}</li>
+                <li key={h.anahtar} className="flex items-center gap-2.5 rounded-xl border border-slate-200 p-2.5 text-xs font-semibold text-navy"><HizmetIkonu Ikon={h.Ikon} className="size-9" boyut={18} />{h.ad}</li>
               ))}
             </ul>
           ) : <p className="text-sm text-slate-500">Hizmet bilgisi girilmemiştir.</p>}

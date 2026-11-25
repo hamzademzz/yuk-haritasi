@@ -51,6 +51,14 @@ export function GirisPaneli({ aciklama, onKapat }) {
   );
 }
 
+export function HizmetIkonu({ Ikon, className = 'size-10', boyut = 20 }) {
+  return (
+    <span className={`grid shrink-0 place-items-center rounded-xl bg-navy/[0.06] text-navy ${className}`}>
+      <Ikon size={boyut} strokeWidth={1.75} aria-hidden="true" />
+    </span>
+  );
+}
+
 export function Alan({ etiket, className = '', children }) {
   return (
     <label className={`block ${className}`}>
