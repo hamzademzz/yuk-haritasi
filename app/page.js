@@ -117,11 +117,12 @@ function Bolum({ ustBaslik, baslik, aciklama, href, baglanti, children }) {
   );
 }
 
-function Durak({ son, children }) {
+function Durak({ son, gecikme, children }) {
   return (
     <p className="flex items-center gap-3">
       <span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${son ? 'bg-brand' : 'border-2 border-navy'}`} />
-      <span className="min-w-0 truncate font-bold text-navy">{children}</span>
+      {/* İç boşluk, truncate'in ışık halesini kırpmasını azaltır */}
+      <span className="ampul -m-1.5 min-w-0 truncate p-1.5 font-bold text-navy" style={{ animationDelay: `${gecikme}s` }}>{children}</span>
     </p>
   );
 }
@@ -137,11 +138,11 @@ function GuncelIlanlar() {
         {yukleniyor ? <Iskelet adet={4} className="h-48" />
           : hata ? <HataDurumu onTekrar={yenile} />
           : veri.length === 0 ? <BosDurum Ikon={Box} mesaj="Henüz aktif yük ilanı yok." />
-          : veri.map((ilan) => (
+          : veri.map((ilan, sira) => (
             <Link key={ilan.id} href="/yukler" className="card group flex flex-col p-4 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg active:scale-[0.99] lg:p-5">
-              <Durak>{ilan.nereden}</Durak>
+              <Durak gecikme={sira * -1.3}>{ilan.nereden}</Durak>
               <span aria-hidden="true" className="ml-[4.5px] h-4 border-l border-dashed border-slate-300" />
-              <Durak son>{ilan.nereye}</Durak>
+              <Durak son gecikme={sira * -1.3}>{ilan.nereye}</Durak>
 
               <p className="mt-4 truncate text-sm font-semibold text-slate-700">{ilan.yuk_turu || 'Genel Yük'}</p>
               <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5 text-xs font-medium text-slate-500">

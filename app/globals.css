@@ -77,3 +77,14 @@ body {
   background-size: auto, auto, 44px 44px, 44px 44px;
 }
 
+/* Güncel ilanlardaki şehir adları: yavaş ampul titremesi.
+   Hızlı yanıp sönme yok; hareket azaltma ayarı açıksa kapanır. */
+.ampul { animation: ampul 5s ease-in-out infinite; }
+@keyframes ampul {
+  0%, 100% { color: var(--color-navy); text-shadow: none; opacity: 1; }
+  40% { color: var(--color-brand-dark); text-shadow: 0 0 6px rgb(245 130 32 / 0.55); opacity: 1; }
+  48% { opacity: 0.55; text-shadow: none; }
+  56% { color: var(--color-brand-dark); text-shadow: 0 0 6px rgb(245 130 32 / 0.55); opacity: 1; }
+  64% { opacity: 0.75; text-shadow: 0 0 2px rgb(245 130 32 / 0.3); }
+  72% { color: var(--color-brand-dark); text-shadow: 0 0 8px rgb(245 130 32 / 0.65); opacity: 1; }
+}
