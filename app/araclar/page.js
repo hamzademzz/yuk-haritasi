@@ -1,356 +1,169 @@
 "use client";
-import React, { Suspense, useEffect, useState, useCallback } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Truck, MapPin, Calendar, FileText, User, Phone, ArrowLeft, Search, Navigation, Filter, X, Box, Camera, Loader2, PlusCircle, Lock, LogIn } from 'lucide-react';
-import Link from 'next/link';
-import { supabase } from '../../lib/supabase'; 
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Camera, Loader2, MapPin, Plus, Search, Truck } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { adresDegistir, useEklePaneli, useSorgu } from '../../lib/hooks';
+import { ARAC_TIPLERI, SEHIRLER } from '../../lib/constants';
+import { Alan, BosDurum, GirisPaneli, HataDurumu, Iskelet, Panel, SayfaBasligi } from '../../components/ui';
+import { IletisimSatiri } from '../../components/IlanKarti';
 
-const BOS_ARAC = {
-  arac_tipi: '',
-  mevcut_konum_sehir: '',
-  ilan_sahibi: '',
-  iletisim: '',
-  aciklama: '',
-  resim_url: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80&w=800'
-};
+const VARSAYILAN_RESIM = 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80&w=800';
+const EN_BUYUK_RESIM_MB = 10;
 
-function AracListesi() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  
-  const [konumInput, setKonumInput] = useState(searchParams.get('konum') || '');
-  const [tipInput, setTipInput] = useState(searchParams.get('tip') || '');
-  
-  const [araclar, setAraclar] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  
-  // Custom Professional Auth Warning Modal State
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+function Filtre({ ilk }) {
+  const [alanlar, setAlanlar] = useState(ilk);
+  const bagla = (ad) => ({ value: alanlar[ad], onChange: (e) => setAlanlar((a) => ({ ...a, [ad]: e.target.value })) });
 
-  const [yeniArac, setYeniArac] = useState(BOS_ARAC);
-
-  // Formu kapatırken eski değerleri de temizle
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setYeniArac(BOS_ARAC);
-  };
-
-  // CHECK AUTHENTICATION AND OPEN MODAL
-  const handleOpenModal = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      setIsAuthModalOpen(true);
-      return;
-    }
-    
-    setIsModalOpen(true);
-  };
-
-  // AUTO-OPEN MODAL LOGIC WITH PROFESSIONAL AUTH CHECK
-  useEffect(() => {
-    const checkAuthAndParam = async () => {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('ekle') === 'true') {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        // Clean URL parameter safely
-        const newUrl = window.location.pathname;
-        window.history.replaceState(null, '', newUrl);
-
-        if (!session) {
-          setIsAuthModalOpen(true);
-        } else {
-          setIsModalOpen(true);
-        }
-      }
-    };
-
-    checkAuthAndParam();
-  }, [router]);
-
-  const fetchAraclar = useCallback(async () => {
-    setLoading(true);
-    let query = supabase.from('araclar').select('*').eq('is_active', true);
-    
-    if (searchParams.get('konum')) {
-      query = query.ilike('mevcut_konum_sehir', `%${searchParams.get('konum')}%`);
-    }
-    if (searchParams.get('tip')) {
-      query = query.ilike('arac_tipi', `%${searchParams.get('tip')}%`);
-    }
-
-    const { data, error } = await query.order('olusturulma_tarihi', { ascending: false });
-    
-    if (!error) {
-      setAraclar(data);
-    } else {
-      console.error("DB Hatası:", error);
-    }
-    setLoading(false);
-  }, [searchParams]);
-
-  useEffect(() => { 
-    fetchAraclar(); 
-  }, [fetchAraclar]);
-
-  // IMAGE UPLOAD LOGIC
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `araclar/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('arac-resimleri')
-      .upload(filePath, file);
-
-    if (uploadError) {
-      alert('Resim yüklenemedi: ' + uploadError.message);
-      setIsUploading(false);
-      return;
-    }
-
-    const { data } = supabase.storage.from('arac-resimleri').getPublicUrl(filePath);
-    const finalUrl = data.publicUrl || `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/arac-resimleri/${filePath}`;
-
-    setYeniArac(prev => ({ ...prev, resim_url: finalUrl }));
-    setIsUploading(false);
-  };
-
-  const handleEkle = async (e) => {
+  const ara = (e) => {
     e.preventDefault();
-
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      setIsModalOpen(false);
-      setIsAuthModalOpen(true);
-      return;
-    }
-
-    const { error } = await supabase.from('araclar').insert([yeniArac]);
-
-    if (error) {
-      alert('İlan eklenirken bir hata oluştu: ' + error.message);
-    } else {
-      closeModal();
-      fetchAraclar();
-    }
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (konumInput) params.set('konum', konumInput);
-    if (tipInput) params.set('tip', tipInput);
-    router.push(`/araclar?${params.toString()}`);
+    const params = new URLSearchParams(Object.entries(alanlar).filter(([, v]) => v));
+    adresDegistir(params.size ? `/araclar?${params}` : '/araclar');
   };
 
   return (
-    <div style={{ backgroundColor: '#f1f5f9', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      
-      {/* HEADER SECTION */}
-      <div style={{ backgroundColor: '#1e3a5f', paddingTop: '3rem', paddingBottom: '6rem', paddingLeft: '1rem', paddingRight: '1rem' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <Link href="/" style={{ color: '#ffffff', textDecoration: 'none', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.1em', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                <ArrowLeft size={16}/> ANA SAYFAYA DÖN
-              </Link>
-              <h1 style={{ color: '#ffffff', fontSize: '2.5rem', fontWeight: '900', margin: 0, fontStyle: 'italic', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
-                GÜNCEL ARAÇ İLANLARI
-              </h1>
-              <p style={{ color: '#f58220', fontWeight: 'bold', marginTop: '0.5rem', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.1em' }}>
-                SİSTEMDE {araclar.length} AKTİF ARAÇ BULUNUYOR
-              </p>
-            </div>
-            <button 
-              onClick={handleOpenModal}
-              style={{ backgroundColor: '#f58220', color: '#ffffff', padding: '1rem 1.5rem', borderRadius: '0.75rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <PlusCircle size={18} /> ARAÇ İLANI VER
-            </button>
-          </div>
-        </div>
-      </div>
+    <form onSubmit={ara} className="card grid grid-cols-2 gap-2 p-3 lg:grid-cols-[1fr_1fr_auto] lg:items-end lg:gap-3 lg:p-4">
+      <Alan etiket="Bulunduğu Şehir"><input className="input" list="sehirler" placeholder="Şehir" {...bagla('konum')} /></Alan>
+      <Alan etiket="Araç Tipi"><input className="input" list="arac-tipleri" placeholder="Tümü" {...bagla('tip')} /></Alan>
+      <button type="submit" className="btn btn-navy col-span-2 lg:col-span-1"><Search size={17} /> Bul</button>
+    </form>
+  );
+}
 
-      <div style={{ maxWidth: '1100px', margin: '-3rem auto 0', padding: '0 1rem 5rem' }}>
-        {/* SEARCH FORM */}
-        <form onSubmit={handleSearch} style={{ backgroundColor: '#ffffff', padding: '1rem', borderRadius: '1rem', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'row', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem', alignItems: 'center' }}>
-          <div style={{ flex: 1, minWidth: '250px' }}>
-            <input 
-              style={{ width: '100%', padding: '1rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '0.9rem', outline: 'none' }}
-              type="text" placeholder="Bulunduğu Şehir?" value={konumInput} onChange={(e) => setKonumInput(e.target.value)}
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: '250px' }}>
-            <input 
-              style={{ width: '100%', padding: '1rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', color: '#000000', fontWeight: 'bold', fontSize: '0.9rem', outline: 'none' }}
-              type="text" placeholder="Araç Tipi? (Tır, Kamyon...)" value={tipInput} onChange={(e) => setTipInput(e.target.value)}
-            />
-          </div>
-          <button type="submit" style={{ backgroundColor: '#1e3a5f', color: '#ffffff', padding: '1rem 2.5rem', borderRadius: '0.75rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Search size={18} /> BUL
-          </button>
-        </form>
+function AracFormu({ onKaydedildi, onGirisGerekli }) {
+  const [resim, setResim] = useState('');
+  const [resimYukleniyor, setResimYukleniyor] = useState(false);
+  const [kaydediliyor, setKaydediliyor] = useState(false);
+  const [hata, setHata] = useState('');
 
-        {/* LISTING */}
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '5rem', fontWeight: 'bold', color: '#1e3a5f' }}>VERİLER ÇEKİLİYOR...</div>
-        ) : (
-          <div style={{ display: 'grid', gap: '1.5rem' }}>
-            {araclar.length > 0 ? (
-              araclar.map((arac) => (
-                <div key={arac.id} style={{ backgroundColor: '#ffffff', borderRadius: '1.5rem', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
-                  
-                  <div style={{ width: '100%', height: '220px', overflow: 'hidden', position: 'relative' }}>
-                    <img src={arac.resim_url} alt={arac.arac_tipi} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
+  const resimSec = async (e) => {
+    const dosya = e.target.files[0];
+    if (!dosya) return;
+    setHata('');
+    if (dosya.size > EN_BUYUK_RESIM_MB * 1024 * 1024) {
+      setHata(`Fotoğraf en fazla ${EN_BUYUK_RESIM_MB} MB olabilir.`);
+      return;
+    }
 
-                  <div style={{ padding: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                      <div>
-                        <span style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', fontSize: '0.65rem', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.05em', border: '1px solid #e2e8f0' }}>
-                          {arac.arac_tipi}
-                        </span>
-                        <h3 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#000000', margin: '0.75rem 0 0', textTransform: 'uppercase', fontStyle: 'italic', lineHeight: 1 }}>
-                          <MapPin size={24} style={{ color: '#f58220' }} /> {arac.mevcut_konum_sehir}
-                        </h3>
-                      </div>
-                    </div>
+    setResimYukleniyor(true);
+    const uzanti = dosya.name.split('.').pop();
+    const yol = `araclar/${crypto.getRandomValues(new Uint32Array(2)).join('-')}.${uzanti}`;
+    const { error } = await supabase.storage.from('arac-resimleri').upload(yol, dosya);
+    if (error) setHata(`Fotoğraf yüklenemedi: ${error.message}`);
+    else setResim(supabase.storage.from('arac-resimleri').getPublicUrl(yol).data.publicUrl);
+    setResimYukleniyor(false);
+  };
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1.5rem', backgroundColor: '#f8fafc', padding: '1.5rem', borderRadius: '1rem', border: '1px solid #f1f5f9' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <FileText size={24} style={{ color: '#64748b' }} />
-                        <div>
-                          <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase' }}>AÇIKLAMA</p>
-                          <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', color: '#000000' }}>{arac.aciklama || 'BELİRTİLMEDİ'}</p>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <Truck size={24} style={{ color: '#64748b' }} />
-                        <div>
-                          <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase' }}>ARAÇ DURUMU</p>
-                          <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', color: '#22c55e' }}>MÜSAİT / AKTİF</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+  const kaydet = async (e) => {
+    e.preventDefault();
+    const form = Object.fromEntries(new FormData(e.currentTarget));
+    setHata('');
+    setKaydediliyor(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return onGirisGerekli();
+      const { error } = await supabase.from('araclar').insert([{
+        ...form,
+        resim_url: resim || VARSAYILAN_RESIM,
+        user_id: session.user.id,
+      }]);
+      if (error) throw error;
+      onKaydedildi();
+    } catch (err) {
+      setHata(`İlan yayınlanamadı: ${err.message}`);
+    } finally {
+      setKaydediliyor(false);
+    }
+  };
 
-                  <div style={{ borderTop: '1px solid #f1f5f9', padding: '2rem', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fcfcfc', flexWrap: 'wrap', gap: '1.5rem' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ width: '3.5rem', height: '3.5rem', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1e3a5f' }}>
-                          <User size={24} />
-                        </div>
-                        <div>
-                          <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: '900', color: '#000000', textTransform: 'uppercase' }}>{arac.ilan_sahibi || "FİRMA YETKİLİSİ"}</p>
-                          <p style={{ margin: 0, fontSize: '0.7rem', color: '#94a3b8', fontWeight: 'bold', textTransform: 'uppercase' }}>DOĞRULANMIŞ ARAÇ SAHİBİ</p>
-                        </div>
-                     </div>
+  return (
+    <form onSubmit={kaydet} className="grid grid-cols-2 gap-3">
+      <Alan etiket="Araç Tipi *"><input className="input" name="arac_tipi" list="arac-tipleri" required placeholder="Tır" /></Alan>
+      <Alan etiket="Bulunduğu Şehir *"><input className="input" name="mevcut_konum_sehir" list="sehirler" required placeholder="Şehir" /></Alan>
+      <Alan etiket="Ad Soyad / Firma Adı *" className="col-span-2 sm:col-span-1"><input className="input" name="ilan_sahibi" required autoComplete="name" /></Alan>
+      <Alan etiket="İletişim Numarası *" className="col-span-2 sm:col-span-1"><input className="input" name="iletisim" required type="tel" autoComplete="tel" placeholder="05XX XXX XX XX" /></Alan>
+      <Alan etiket="Açıklama" className="col-span-2"><textarea className="input" name="aciklama" rows={3} placeholder="Aracınız hakkında kısa bilgi" /></Alan>
 
-                     <a 
-                      href={`tel:${arac.iletisim}`}
-                      style={{ backgroundColor: '#22c55e', color: '#ffffff', textDecoration: 'none', padding: '1.25rem 3rem', borderRadius: '1rem', fontWeight: '900', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', boxShadow: '0 10px 15px -3px rgba(34, 197, 94, 0.2)' }}
-                     >
-                      <Phone size={20} fill="white" /> ŞİMDİ ARA
-                     </a>
-                  </div>
+      <label className="col-span-2 flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-500 focus-within:border-brand">
+        <input type="file" accept="image/*" onChange={resimSec} className="sr-only" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {resim && !resimYukleniyor && <img src={resim} alt="Seçilen fotoğraf" className="h-40 w-full object-cover" />}
+        <span className="flex items-center gap-2 py-2">
+          {resimYukleniyor ? <><Loader2 size={20} className="animate-spin" /> Yükleniyor…</> : <><Camera size={20} /> {resim ? 'Fotoğrafı değiştir' : 'Fotoğraf ekle'}</>}
+        </span>
+      </label>
+
+      {hata && <p role="alert" className="col-span-2 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{hata}</p>}
+      <button type="submit" disabled={kaydediliyor || resimYukleniyor} className="btn btn-brand col-span-2">{kaydediliyor ? 'Kaydediliyor…' : 'İlanı Yayınla'}</button>
+    </form>
+  );
+}
+
+function AracListesi() {
+  const searchParams = useSearchParams();
+  const secim = { konum: searchParams.get('konum') || '', tip: searchParams.get('tip') || '' };
+  const anahtar = JSON.stringify(secim);
+  const filtreVar = Object.values(secim).some(Boolean);
+  const { panel, ac, kapat, girisIste } = useEklePaneli();
+
+  const { veri, hata, yukleniyor, yenile } = useSorgu(anahtar, () => {
+    let sorgu = supabase.from('araclar').select('*').eq('is_active', true);
+    if (secim.konum) sorgu = sorgu.ilike('mevcut_konum_sehir', `%${secim.konum}%`);
+    if (secim.tip) sorgu = sorgu.ilike('arac_tipi', `%${secim.tip}%`);
+    return sorgu.order('olusturulma_tarihi', { ascending: false });
+  });
+
+  return (
+    <>
+      <SayfaBasligi baslik="Araç İlanları" aciklama={yukleniyor ? 'İlanlar yükleniyor…' : `${veri.length} aktif araç`}>
+        <button onClick={ac} className="btn btn-brand"><Plus size={18} /> Araç İlanı Ver</button>
+      </SayfaBasligi>
+
+      <div className="mx-auto -mt-8 max-w-6xl px-4 lg:-mt-10">
+        <Filtre key={anahtar} ilk={secim} />
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2 lg:mt-6 lg:gap-4 xl:grid-cols-3">
+          {yukleniyor ? <Iskelet className="h-72" />
+            : hata ? <HataDurumu onTekrar={yenile} />
+            : veri.length === 0 ? (
+              <BosDurum Ikon={Truck} mesaj={filtreVar ? 'Aradığınız kriterlere uygun araç bulunamadı.' : 'Henüz aktif araç ilanı yok.'}>
+                {filtreVar && <button onClick={() => adresDegistir('/araclar')} className="btn btn-ghost">Tüm araçları göster</button>}
+              </BosDurum>
+            )
+            : veri.map((arac) => (
+              <article key={arac.id} className="card flex flex-col overflow-hidden">
+                <div className="relative aspect-[16/9] bg-slate-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={arac.resim_url || VARSAYILAN_RESIM} alt={arac.arac_tipi} loading="lazy" className="size-full object-cover" />
+                  <span className="absolute top-3 left-3 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-navy shadow">{arac.arac_tipi}</span>
+                  <span className="absolute top-3 right-3 rounded-full bg-green-600 px-3 py-1 text-xs font-bold text-white shadow">Müsait</span>
                 </div>
-              ))
-            ) : (
-              <div style={{ textAlign: 'center', padding: '5rem', backgroundColor: '#fff', borderRadius: '1.5rem', border: '1px dashed #cbd5e1' }}>
-                <p style={{ color: '#64748b', fontWeight: 'bold' }}>Aradığınız kriterlere uygun araç bulunamadı.</p>
-              </div>
-            )}
-          </div>
-        )}
+                <div className="p-4">
+                  <p className="flex items-center gap-2 text-lg font-extrabold text-navy"><MapPin size={18} className="shrink-0 text-brand" /><span className="min-w-0 break-words">{arac.mevcut_konum_sehir}</span></p>
+                  {arac.aciklama && <p className="mt-2 line-clamp-3 text-sm break-words text-slate-600">{arac.aciklama}</p>}
+                </div>
+                <IletisimSatiri ad={arac.ilan_sahibi || 'Firma Yetkilisi'} altYazi="Doğrulanmış araç sahibi" telefon={arac.iletisim} />
+              </article>
+            ))}
+        </div>
       </div>
 
-      {/* FULLY RESPONSIVE CENTERED AUTHENTICATION OVERLAY MODAL */}
-      {isAuthModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(30, 58, 95, 0.85)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(4px)' }}>
-          <div style={{ backgroundColor: '#ffffff', width: '90%', maxWidth: '440px', borderRadius: '1.5rem', padding: '2.5rem', position: 'relative', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-            <button onClick={() => setIsAuthModalOpen(false)} style={{ position: 'absolute', right: '1.25rem', top: '1.25rem', border: 'none', background: 'none', cursor: 'pointer', color: '#94a3b8' }}>
-              <X size={22} />
-            </button>
-            
-            <div style={{ width: '4rem', height: '4rem', backgroundColor: '#fff7ed', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#f58220', border: '1px solid #ffedd5' }}>
-              <Lock size={28} />
-            </div>
-
-            <h3 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#1e3a5f', margin: '0 0 0.5rem', textTransform: 'uppercase', fontStyle: 'italic', letterSpacing: '-0.01em' }}>
-              OTURUM AÇMANIZ GEREKLİ
-            </h3>
-            
-            <p style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '600', lineHeight: '1.5', margin: '0 0 2rem' }}>
-              Araç ilanı eklemek ve lojistik ağımıza katılmak için lütfen hesabınıza giriş yapın.
-            </p>
-
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
-              <button 
-                onClick={() => {
-                  setIsAuthModalOpen(false);
-                  router.push('/login');
-                }}
-                style={{ backgroundColor: '#1e3a5f', color: '#ffffff', padding: '1rem', borderRadius: '0.75rem', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 10px 15px -3px rgba(30, 58, 95, 0.2)' }}
-              >
-                <LogIn size={18} /> GİRİŞ YAP / ÜYE OL
-              </button>
-              <button 
-                onClick={() => setIsAuthModalOpen(false)}
-                style={{ backgroundColor: '#f8fafc', color: '#64748b', padding: '1rem', borderRadius: '0.75rem', fontWeight: 'bold', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '0.9rem' }}
-              >
-                VAZGEÇ
-              </button>
-            </div>
-          </div>
-        </div>
+      {panel === 'giris' && <GirisPaneli aciklama="Araç ilanı eklemek için lütfen hesabınıza giriş yapın." onKapat={kapat} />}
+      {panel === 'form' && (
+        <Panel baslik="Yeni Araç İlanı" onKapat={kapat}>
+          <AracFormu onKaydedildi={() => { kapat(); yenile(); }} onGirisGerekli={girisIste} />
+        </Panel>
       )}
 
-      {/* ADD VEHICLE MODAL */}
-      {isModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(30, 58, 95, 0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ backgroundColor: '#fff', width: '90%', maxWidth: '600px', borderRadius: '1.5rem', padding: '2rem', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
-            <button onClick={closeModal} style={{ position: 'absolute', right: '1.5rem', top: '1.5rem', border: 'none', background: 'none', cursor: 'pointer', color: '#64748b' }}>
-              <X size={24} />
-            </button>
-            
-            <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#1e3a5f', marginBottom: '1.5rem', fontStyle: 'italic', textTransform: 'uppercase' }}>YENİ ARAÇ EKLE</h2>
-            
-            <form onSubmit={handleEkle} style={{ display: 'grid', gap: '1rem' }}>
-              <input required style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="Araç Tipi (Örn: Tır)" onChange={(e) => setYeniArac({...yeniArac, arac_tipi: e.target.value})} />
-              <input required style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="Bulunduğu Şehir" onChange={(e) => setYeniArac({...yeniArac, mevcut_konum_sehir: e.target.value})} />
-              <input required style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="Ad Soyad / Firma Adı" onChange={(e) => setYeniArac({...yeniArac, ilan_sahibi: e.target.value})} />
-              <input required type="tel" style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="İletişim Numarası" onChange={(e) => setYeniArac({...yeniArac, iletisim: e.target.value})} />
-              <textarea style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000', fontFamily: 'sans-serif', resize: 'vertical', minHeight: '80px' }} placeholder="Araç Açıklaması" onChange={(e) => setYeniArac({...yeniArac, aciklama: e.target.value})} />
-              
-              <div style={{ border: '2px dashed #e2e8f0', borderRadius: '0.75rem', padding: '1rem', textAlign: 'center' }}>
-                <input type="file" id="file" hidden accept="image/*" onChange={handleImageUpload} />
-                <label htmlFor="file" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', color: '#64748b' }}>
-                  {isUploading ? <Loader2 className="animate-spin" /> : <Camera size={24} />}
-                  <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{isUploading ? 'YÜKLENİYOR...' : 'GALERİDEN FOTOĞRAF SEÇ'}</span>
-                </label>
-              </div>
-
-              <button type="submit" disabled={isUploading} style={{ backgroundColor: '#f58220', color: '#fff', padding: '1rem', borderRadius: '0.75rem', fontWeight: '900', border: 'none', cursor: 'pointer', marginTop: '1rem', opacity: isUploading ? 0.5 : 1 }}>
-                İLANIMI YAYINLA
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+      <datalist id="sehirler">{SEHIRLER.map((s) => <option key={s} value={s} />)}</datalist>
+      <datalist id="arac-tipleri">{ARAC_TIPLERI.map((t) => <option key={t} value={t} />)}</datalist>
+    </>
   );
 }
 
 export default function AraclarPage() {
   return (
-    <Suspense fallback={<div style={{ textAlign: 'center', padding: '5rem' }}>Yükleniyor...</div>}>
+    <Suspense fallback={<p className="p-20 text-center text-slate-500">Yükleniyor…</p>}>
       <AracListesi />
     </Suspense>
   );

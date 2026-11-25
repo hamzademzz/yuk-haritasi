@@ -1,60 +1,56 @@
 "use client";
 import { useState } from 'react';
-import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { authHatasi } from '../../lib/authHata';
+import AuthKart from '../../components/AuthKart';
+import { Alan } from '../../components/ui';
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState({ firstName: '', lastName: '', phone: '', email: '', password: '', confirmPassword: '' });
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [yukleniyor, setYukleniyor] = useState(false);
+  const [mesaj, setMesaj] = useState({ tip: '', icerik: '' });
 
-  const handleRegister = async (e) => {
+  const kayitOl = async (e) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      setMessage("Şifreler eşleşmiyor!");
+    const f = Object.fromEntries(new FormData(e.currentTarget));
+    if (f.password !== f.confirmPassword) {
+      setMesaj({ tip: 'hata', icerik: 'Şifreler eşleşmiyor.' });
       return;
     }
-    setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        data: { first_name: formData.firstName, last_name: formData.lastName, phone: formData.phone }
-      }
+    setMesaj({ tip: '', icerik: '' });
+    setYukleniyor(true);
+    const { data, error } = await supabase.auth.signUp({
+      email: f.email,
+      password: f.password,
+      options: { data: { first_name: f.firstName, last_name: f.lastName, phone: f.phone } },
     });
-    if (error) { setMessage(error.message); setLoading(false); }
-    else { setMessage('Kayıt Başarılı! Giriş yapabilirsiniz.'); setLoading(false); }
+    if (error) {
+      setMesaj({ tip: 'hata', icerik: authHatasi(error.message) });
+    } else if (data.session) {
+      // E-posta onayı kapalıysa kullanıcı doğrudan giriş yapmış olur
+      window.location.assign('/');
+      return;
+    } else {
+      setMesaj({ tip: 'basari', icerik: 'Kaydınız alındı. E-postanıza gelen onay bağlantısına tıkladıktan sonra giriş yapabilirsiniz.' });
+    }
+    setYukleniyor(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-gray-100 relative">
-        <Link href="/" className="absolute top-6 left-6 text-gray-500 hover:text-[#1e3a5f] flex items-center gap-1 text-xs font-bold">
-          <ArrowLeft size={16} /> Ana Sayfa
-        </Link>
-        <div className="text-center mt-8 mb-8">
-          <h1 className="text-3xl font-black text-[#1e3a5f]">Kayıt Ol</h1>
-          <p className="text-gray-400 text-sm mt-2 font-medium">Lojistik dünyasına ilk adımınızı atın.</p>
-        </div>
-        <form onSubmit={handleRegister} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <input type="text" placeholder="Ad" required className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 font-bold placeholder:text-gray-400" onChange={(e) => setFormData({...formData, firstName: e.target.value})} />
-            <input type="text" placeholder="Soyad" required className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 font-bold placeholder:text-gray-400" onChange={(e) => setFormData({...formData, lastName: e.target.value})} />
-          </div>
-          <input type="tel" placeholder="Telefon Numarası" required className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 font-bold placeholder:text-gray-400" onChange={(e) => setFormData({...formData, phone: e.target.value})} />
-          <input type="email" placeholder="E-posta" required className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 font-bold placeholder:text-gray-400" onChange={(e) => setFormData({...formData, email: e.target.value})} />
-          <input type="password" placeholder="Şifre" required className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 font-bold placeholder:text-gray-400" onChange={(e) => setFormData({...formData, password: e.target.value})} />
-          <input type="password" placeholder="Şifre Tekrar" required className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 font-bold placeholder:text-gray-400" onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} />
-          <button disabled={loading} className="w-full py-4 bg-[#f58220] text-white rounded-2xl font-black shadow-lg hover:bg-[#e0721a] transition-all">
-            {loading ? 'İşlem Yapılıyor...' : 'Kayıt Ol'}
-          </button>
-        </form>
-        {message && <p className="mt-4 text-blue-600 text-center text-xs font-bold">{message}</p>}
-        <p className="mt-8 text-center text-sm text-gray-500 font-medium">
-          Zaten üye misiniz? <Link href="/login" className="text-[#1e3a5f] font-black underline">Giriş Yap</Link>
-        </p>
-      </div>
-    </div>
+    <AuthKart baslik="Kayıt Ol" aciklama="Lojistik dünyasına ilk adımınızı atın.">
+      <form onSubmit={kayitOl} className="grid grid-cols-2 gap-3">
+        <Alan etiket="Ad"><input className="input" name="firstName" autoComplete="given-name" required /></Alan>
+        <Alan etiket="Soyad"><input className="input" name="lastName" autoComplete="family-name" required /></Alan>
+        <Alan etiket="Telefon" className="col-span-2"><input className="input" name="phone" type="tel" autoComplete="tel" required placeholder="05XX XXX XX XX" /></Alan>
+        <Alan etiket="E-posta" className="col-span-2"><input className="input" name="email" type="email" autoComplete="email" required /></Alan>
+        <Alan etiket="Şifre (en az 6 karakter)" className="col-span-2"><input className="input" name="password" type="password" autoComplete="new-password" minLength={6} required /></Alan>
+        <Alan etiket="Şifre Tekrar" className="col-span-2"><input className="input" name="confirmPassword" type="password" autoComplete="new-password" minLength={6} required /></Alan>
+        {mesaj.icerik && <p role="alert" className={`col-span-2 rounded-xl p-3 text-sm font-medium ${mesaj.tip === 'hata' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-800'}`}>{mesaj.icerik}</p>}
+        <button disabled={yukleniyor} className="btn btn-brand col-span-2">{yukleniyor ? 'İşlem yapılıyor…' : 'Kayıt Ol'}</button>
+      </form>
+      <p className="mt-6 text-center text-sm text-slate-500">
+        Zaten üye misiniz? <Link href="/login" className="font-bold text-navy underline">Giriş Yap</Link>
+      </p>
+    </AuthKart>
   );
 }

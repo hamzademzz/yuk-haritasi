@@ -1,4 +1,5 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
+import AppShell from "../components/AppShell";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -6,21 +7,22 @@ const geistSans = Geist({
   subsets: ["latin", "latin-ext"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin", "latin-ext"],
-});
-
 export const metadata = {
   title: "YükHaritası - Türkiye'nin Lojistik Platformu",
   description: "Türkiye genelinde yük sahiplerini ve nakliyecileri buluşturur.",
+  appleWebApp: { capable: true, title: "YükHaritası", statusBarStyle: "black-translucent" },
+};
+
+export const viewport = {
+  themeColor: "#1e3a5f",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="tr">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
+    <html lang="tr" className={geistSans.variable}>
+      <body className="font-sans antialiased">
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
