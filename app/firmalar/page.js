@@ -21,6 +21,11 @@ const TURKIYE_SEHIRLERI = [
   "Kırıkkale", "Batman", "Şırnak", "Bartın", "Ardahan", "Iğdır", "Yalova", "Karabük", "Kilis", "Osmaniye", "Düzce"
 ].sort((a, b) => a.localeCompare(b, 'tr'));
 
+// TC kimlik ve vergi numarası bilerek istenmiyor
+const FIRMA_SUTUNLARI = 'id, logo_url, telefon, whatsapp, eposta, firma_adi, hakkimizda, merkez_konum, hizmet_bolgeleri, uye_no, puan, yorum_sayisi, parsiyel_tasima';
+const EK_HIZMET_SUTUNLARI = 'oto_kurtarici, oto_tasiyici, vinc_hizmetleri, forklift_hizmetleri, depolama, is_makinalari, paketleme';
+const HIZMET_ANAHTARLARI = ['parsiyel_tasima', ...EK_HIZMET_SUTUNLARI.split(', ')];
+
 function FirmalarRehberi() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -110,20 +115,33 @@ function FirmalarRehberi() {
   const fetchFirmalar = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase.from('firmalar').select('*').eq('is_active', true);
-      
-      if (urlArama) {
-        query = query.ilike('firma_adi', `%${urlArama}%`);
-      }
-      if (urlSehir) {
-        query = query.ilike('merkez_konum', `%${urlSehir}%`);
-      }
-      if (urlHizmet) {
-        query = query.eq(urlHizmet, true);
+      const sorgula = (sutunlar) => {
+        let query = supabase.from('firmalar').select(sutunlar).eq('is_active', true);
+
+        if (urlArama) {
+          query = query.ilike('firma_adi', `%${urlArama}%`);
+        }
+        if (urlSehir) {
+          query = query.ilike('merkez_konum', `%${urlSehir}%`);
+        }
+        if (HIZMET_ANAHTARLARI.includes(urlHizmet)) {
+          query = query.eq(urlHizmet, true);
+        }
+        return query.order('firma_adi', { ascending: true });
+      };
+
+      let { data, error } = await sorgula(`${FIRMA_SUTUNLARI}, ${EK_HIZMET_SUTUNLARI}`);
+
+      // 42703: sütun yok. Hizmet sütunları eklenene kadar listeyi onlarsız getir.
+      if (error?.code === '42703') {
+        ({ data, error } = await sorgula(FIRMA_SUTUNLARI));
       }
 
-      let { data, error } = await query.order('firma_adi', { ascending: true });
-      
+      if (error) {
+        console.error("Veri yukleme hatasi:", error);
+        setFirmalar([]);
+      }
+
       if (!error && data) {
         setFirmalar(data);
         const urlId = searchParams.get('id');
@@ -282,7 +300,7 @@ function FirmalarRehberi() {
             {[
               { id: 'profil', etiket: 'Profil', ikon: <Grid size={16} /> },
               { id: 'hizmetler', etiket: 'Hizmetler', ikon: <Truck size={16} /> },
-              { id: 'ilanlar', etiket: 'İlanlar (8)', ikon: <FileText size={16} /> },
+              { id: 'ilanlar', etiket: 'İlanlar', ikon: <FileText size={16} /> },
               { id: 'galeri', etiket: 'Galeri', ikon: <ImageIcon size={16} /> },
               { id: 'yorumlar', etiket: `Yorumlar (${seciliFirma.yorum_sayisi || '0'})`, ikon: <MessageSquare size={16} /> }
             ].map(tab => (

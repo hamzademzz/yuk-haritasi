@@ -5,6 +5,19 @@ import { Truck, MapPin, Calendar, Weight, User, Phone, ArrowLeft, Search, Naviga
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase'; 
 
+const BOS_FORM = {
+  yuk_turu: '',
+  agirlik_ton: '',
+  arac_tipi_gereksinimi: '',
+  nereden: '',
+  nereye: '',
+  yukleme_tarihi: '',
+  bosaltma_tarihi: '',
+  ilan_sahibi_ad_soyad: '',
+  telefon_numarasi: '',
+  is_active: true
+};
+
 function YukListesi() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -22,18 +35,13 @@ function YukListesi() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Yeni Yük Form State
-  const [formData, setFormData] = useState({
-    yuk_turu: '',
-    agirlik_ton: '',
-    arac_tipi_gereksinimi: '',
-    nereden: '',
-    nereye: '',
-    yukleme_tarihi: '',
-    bosaltma_tarihi: '',
-    ilan_sahibi_ad_soyad: '',
-    telefon_numarasi: '',
-    is_active: true
-  });
+  const [formData, setFormData] = useState(BOS_FORM);
+
+  // Formu kapatırken eski değerleri de temizle
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setFormData(BOS_FORM);
+  };
 
   // CHECK AUTHENTICATION AND OPEN MODAL
   const handleOpenModal = async () => {
@@ -79,6 +87,9 @@ function YukListesi() {
     if (searchParams.get('nereye')) {
       query = query.ilike('nereye', `%${searchParams.get('nereye')}%`);
     }
+    if (searchParams.get('aracTipi')) {
+      query = query.ilike('arac_tipi_gereksinimi', `%${searchParams.get('aracTipi')}%`);
+    }
     if (searchParams.get('tarih')) {
       query = query.eq('yukleme_tarihi', searchParams.get('tarih'));
     }
@@ -103,6 +114,7 @@ function YukListesi() {
     if (neredenInput) params.set('nereden', neredenInput);
     if (nereyeInput) params.set('nereye', nereyeInput);
     if (tarihInput) params.set('tarih', tarihInput);
+    if (searchParams.get('aracTipi')) params.set('aracTipi', searchParams.get('aracTipi'));
     
     router.push(`/yukler?${params.toString()}`);
   };
@@ -124,10 +136,11 @@ function YukListesi() {
         .insert([{ 
           ...formData, 
           agirlik_ton: parseFloat(formData.agirlik_ton),
+          bosaltma_tarihi: formData.bosaltma_tarihi || null,
           olusturulma_tarihi: new Date().toISOString()
         }]);
       if (error) throw error;
-      setIsModalOpen(false);
+      closeModal();
       fetchYukler();
     } catch (error) {
       alert("Hata: " + error.message);
@@ -342,7 +355,7 @@ function YukListesi() {
       {isModalOpen && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(30, 58, 95, 0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ backgroundColor: '#fff', width: '90%', maxWidth: '600px', borderRadius: '1.5rem', padding: '2rem', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
-            <button onClick={() => setIsModalOpen(false)} style={{ position: 'absolute', right: '1.5rem', top: '1.5rem', border: 'none', background: 'none', cursor: 'pointer', color: '#64748b' }}>
+            <button onClick={closeModal} style={{ position: 'absolute', right: '1.5rem', top: '1.5rem', border: 'none', background: 'none', cursor: 'pointer', color: '#64748b' }}>
               <X size={24} />
             </button>
             
@@ -351,7 +364,7 @@ function YukListesi() {
             <form onSubmit={handleFormSubmit} style={{ display: 'grid', gap: '1rem' }}>
               <input required className="modal-input" style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="Yükün Cinsi (Örn: Demir, Paletli)" onChange={(e) => setFormData({...formData, yuk_turu: e.target.value})} />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <input required type="number" className="modal-input" style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="Ağırlık (Ton)" onChange={(e) => setFormData({...formData, agirlik_ton: e.target.value})} />
+                <input required type="number" step="any" min="0" className="modal-input" style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="Ağırlık (Ton)" onChange={(e) => setFormData({...formData, agirlik_ton: e.target.value})} />
                 <input className="modal-input" style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="Gereken Araç" onChange={(e) => setFormData({...formData, arac_tipi_gereksinimi: e.target.value})} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

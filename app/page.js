@@ -30,6 +30,7 @@ export default function HomePage() {
   const [aktifTab, setAktifTab] = useState("yuk");
   
   const [canliIlanlar, setCanliIlanlar] = useState([]);
+  const [ilanDurumu, setIlanDurumu] = useState('yukleniyor'); // 'yukleniyor' | 'hazir' | 'hata'
 
   useEffect(() => {
     const kullaniciyiGetir = async () => {
@@ -51,13 +52,14 @@ export default function HomePage() {
     };
 
     const getLatestLoads = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('yuk_ilanlari')
         .select('*')
         .eq('is_active', true)
         .order('olusturulma_tarihi', { ascending: false })
         .limit(4);
       if (data) setCanliIlanlar(data);
+      setIlanDurumu(error ? 'hata' : 'hazir');
     };
 
     kullaniciyiGetir();
@@ -81,7 +83,8 @@ export default function HomePage() {
 
   const handleBul = () => {
     if (aktifTab === "firma") {
-      router.push(`/firmalar?arama=${firmaAdi}&sehir=${nereden}`);
+      const params = new URLSearchParams({ arama: firmaAdi, sehir: nereden });
+      router.push(`/firmalar?${params.toString()}`);
     } else if (aktifTab === "arac") {
       const params = new URLSearchParams({ konum: nereden, tip: aracTipi });
       router.push(`/araclar?${params.toString()}`);
@@ -92,14 +95,14 @@ export default function HomePage() {
   };
 
   const lojistikHizmetler = [
-    { baslik: "OTO KURTARICI", alt: "7/24 Yol Yardım", ikon: "🚨" },
-    { baslik: "OTO TAŞIYICI", alt: "Evden Eve Nakliyat", ikon: "⛓️" },
-    { baslik: "VİNÇ HİZMETLERİ", alt: "Vinç & Mobil Vinç", ikon: "🏗️" },
-    { baslik: "FORKLİFT HİZMETLERİ", alt: "Forklift & İstif", ikon: "🚜" },
-    { baslik: "DEPOLAMA", alt: "Depo & Antrepo", ikon: "🏢" },
-    { baslik: "İŞ MAKİNALARI", alt: "Ekskavatör & Dozer", ikon: "👷" },
-    { baslik: "PAKETLEME", alt: "Ambalaj Hizmetleri", ikon: "📦" },
-    { baslik: "PARSİYEL TAŞIMA", alt: "Komple Taşıma", ikon: "🚛" },
+    { anahtar: "oto_kurtarici", baslik: "OTO KURTARICI", alt: "7/24 Yol Yardım", ikon: "🚨" },
+    { anahtar: "oto_tasiyici", baslik: "OTO TAŞIYICI", alt: "Evden Eve Nakliyat", ikon: "⛓️" },
+    { anahtar: "vinc_hizmetleri", baslik: "VİNÇ HİZMETLERİ", alt: "Vinç & Mobil Vinç", ikon: "🏗️" },
+    { anahtar: "forklift_hizmetleri", baslik: "FORKLİFT HİZMETLERİ", alt: "Forklift & İstif", ikon: "🚜" },
+    { anahtar: "depolama", baslik: "DEPOLAMA", alt: "Depo & Antrepo", ikon: "🏢" },
+    { anahtar: "is_makinalari", baslik: "İŞ MAKİNALARI", alt: "Ekskavatör & Dozer", ikon: "👷" },
+    { anahtar: "paketleme", baslik: "PAKETLEME", alt: "Ambalaj Hizmetleri", ikon: "📦" },
+    { anahtar: "parsiyel_tasima", baslik: "PARSİYEL TAŞIMA", alt: "Komple Taşıma", ikon: "🚛" },
   ];
 
   const oneCikanFirmalar = [
@@ -293,7 +296,7 @@ export default function HomePage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           {lojistikHizmetler.map((hizmet, idx) => (
-            <div key={idx} className="bg-[#1e3a5f] border border-[#2a4e7a] rounded-2xl p-4 text-center hover:bg-[#f58220] transition-all cursor-pointer group shadow-lg">
+            <Link key={idx} href={`/firmalar?hizmet=${hizmet.anahtar}`} className="block bg-[#1e3a5f] border border-[#2a4e7a] rounded-2xl p-4 text-center hover:bg-[#f58220] transition-all cursor-pointer group shadow-lg">
               <div className="text-5xl mb-3 group-hover:scale-110 transition-transform inline-block">
                 {hizmet.ikon}
               </div>
@@ -303,7 +306,7 @@ export default function HomePage() {
               <p className="text-[8px] text-gray-300 font-bold uppercase opacity-80 group-hover:text-white">
                 {hizmet.alt}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -331,7 +334,11 @@ export default function HomePage() {
                 </button>
               </Link>
             </div>
-          )) : (
+          )) : ilanDurumu !== 'yukleniyor' ? (
+            <p className="col-span-full text-center text-sm text-gray-500 py-10">
+              {ilanDurumu === 'hata' ? 'İlanlar yüklenemedi. Lütfen sayfayı yenileyin.' : 'Henüz aktif yük ilanı yok.'}
+            </p>
+          ) : (
             [1, 2, 3, 4].map((n) => (
                <div key={n} className="bg-gray-50 border border-gray-100 rounded-2xl p-5 h-40 animate-pulse"></div>
             ))

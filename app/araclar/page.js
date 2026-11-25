@@ -5,6 +5,15 @@ import { Truck, MapPin, Calendar, FileText, User, Phone, ArrowLeft, Search, Navi
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase'; 
 
+const BOS_ARAC = {
+  arac_tipi: '',
+  mevcut_konum_sehir: '',
+  ilan_sahibi: '',
+  iletisim: '',
+  aciklama: '',
+  resim_url: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80&w=800'
+};
+
 function AracListesi() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -20,13 +29,13 @@ function AracListesi() {
   // Custom Professional Auth Warning Modal State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  const [yeniArac, setYeniArac] = useState({
-    arac_tipi: '',
-    mevcut_konum_sehir: '',
-    iletisim: '',
-    aciklama: '',
-    resim_url: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&q=80&w=800'
-  });
+  const [yeniArac, setYeniArac] = useState(BOS_ARAC);
+
+  // Formu kapatırken eski değerleri de temizle
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setYeniArac(BOS_ARAC);
+  };
 
   // CHECK AUTHENTICATION AND OPEN MODAL
   const handleOpenModal = async () => {
@@ -129,7 +138,7 @@ function AracListesi() {
     if (error) {
       alert('İlan eklenirken bir hata oluştu: ' + error.message);
     } else {
-      setIsModalOpen(false);
+      closeModal();
       fetchAraclar();
     }
   };
@@ -307,7 +316,7 @@ function AracListesi() {
       {isModalOpen && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(30, 58, 95, 0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ backgroundColor: '#fff', width: '90%', maxWidth: '600px', borderRadius: '1.5rem', padding: '2rem', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
-            <button onClick={() => setIsModalOpen(false)} style={{ position: 'absolute', right: '1.5rem', top: '1.5rem', border: 'none', background: 'none', cursor: 'pointer', color: '#64748b' }}>
+            <button onClick={closeModal} style={{ position: 'absolute', right: '1.5rem', top: '1.5rem', border: 'none', background: 'none', cursor: 'pointer', color: '#64748b' }}>
               <X size={24} />
             </button>
             
@@ -316,7 +325,8 @@ function AracListesi() {
             <form onSubmit={handleEkle} style={{ display: 'grid', gap: '1rem' }}>
               <input required style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="Araç Tipi (Örn: Tır)" onChange={(e) => setYeniArac({...yeniArac, arac_tipi: e.target.value})} />
               <input required style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="Bulunduğu Şehir" onChange={(e) => setYeniArac({...yeniArac, mevcut_konum_sehir: e.target.value})} />
-              <input required style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="İletişim Numarası" onChange={(e) => setYeniArac({...yeniArac, iletisim: e.target.value})} />
+              <input required style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="Ad Soyad / Firma Adı" onChange={(e) => setYeniArac({...yeniArac, ilan_sahibi: e.target.value})} />
+              <input required type="tel" style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000' }} placeholder="İletişim Numarası" onChange={(e) => setYeniArac({...yeniArac, iletisim: e.target.value})} />
               <textarea style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#000', fontFamily: 'sans-serif', resize: 'vertical', minHeight: '80px' }} placeholder="Araç Açıklaması" onChange={(e) => setYeniArac({...yeniArac, aciklama: e.target.value})} />
               
               <div style={{ border: '2px dashed #e2e8f0', borderRadius: '0.75rem', padding: '1rem', textAlign: 'center' }}>

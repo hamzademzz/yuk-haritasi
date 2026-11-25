@@ -3,22 +3,22 @@ import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
 });
 
 export const metadata = {
-  title: "LoadMap - Turkey's Logistics Network",
-  description: "Connecting shippers and carriers across Turkey",
+  title: "YükHaritası - Türkiye'nin Lojistik Platformu",
+  description: "Türkiye genelinde yük sahiplerini ve nakliyecileri buluşturur.",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="tr">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>

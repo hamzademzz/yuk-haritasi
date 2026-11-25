@@ -1,9 +1,9 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
   User, Building2, Phone, Shield, MapPin, Tag, PlusCircle, 
   Lock, LogOut, ArrowRight, Home, Box, Truck, Edit3, Save, 
-  List, CheckCircle, Clock, MessageSquare, AlertCircle
+  List, CheckCircle, Clock, MessageSquare, AlertCircle, X, Trash2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -29,8 +29,59 @@ export default function ProfilePage() {
   const [realYukIlanlari, setRealYukIlanlari] = useState([]);
   const [userStats, setUserStats] = useState({ ilanlar: 0, teklifler: 0, onayli: true });
 
+  // Inline editing modal management states
+  const [duzenlenenIlan, setDuzenlenenIlan] = useState(null);
+  const [duzenlemeTipi, setDuzenlemeTipi] = useState(null); // 'yuk' veya 'arac'
+
+  const profilAndIlanlariGetir = useCallback(async (userId) => {
+    // 1. Get profile data
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, phone, rol')
+      .eq('id', userId)
+      .single();
+
+    if (profile) {
+      setProfilData({
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        phone: profile.phone || '',
+        // Veritabanı varsayılanı 'user' seçeneklerde yok; ilk seçeneği göster
+        rol: profile.rol && profile.rol !== 'user' ? profile.rol : 'Firma / Yük Sahibi'
+      });
+    }
+
+    // 2. Fetch real vehicle listings (araclar table)
+    const { data: araclarData, error: araclarError } = await supabase
+      .from('araclar')
+      .select('*')
+      .eq('user_id', userId)
+      .order('id', { ascending: false });
+
+    if (!araclarError && araclarData) {
+      setRealAracIlanlari(araclarData);
+    }
+
+    // 3. Fetch real freight listings (yuk_ilanlari table)
+    const { data: yuklerData, error: yuklerError } = await supabase
+      .from('yuk_ilanlari')
+      .select('*')
+      .eq('user_id', userId)
+      .order('id', { ascending: false });
+
+    if (!yuklerError && yuklerData) {
+      setRealYukIlanlari(yuklerData);
+    }
+
+    const totalIlanCount = (araclarData?.length || 0) + (yuklerData?.length || 0);
+    setUserStats(prev => ({
+      ...prev,
+      ilanlar: totalIlanCount
+    }));
+  }, []);
+
   useEffect(() => {
-    const profilAndIlanlariGetir = async () => {
+    const baslat = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user ?? null;
 
@@ -40,57 +91,12 @@ export default function ProfilePage() {
       }
 
       setKullanici(user);
-
-      // 1. Get profile data
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, phone, rol')
-        .eq('id', user.id)
-        .single();
-
-      if (profile) {
-        setProfilData({
-          first_name: profile.first_name || '',
-          last_name: profile.last_name || '',
-          phone: profile.phone || '',
-          rol: profile.rol || 'Firma / Yük Sahibi'
-        });
-      }
-
-      // 2. Fetch real vehicle listings (araclar table)
-      const { data: araclarData, error: araclarError } = await supabase
-        .from('araclar')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('id', { ascending: false });
-
-      if (!araclarError && araclarData) {
-        setRealAracIlanlari(araclarData);
-      }
-
-      // 3. Fetch real freight listings (yuk_ilanlari table)
-      const { data: yuklerData, error: yuklerError } = await supabase
-        .from('yuk_ilanlari')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('id', { ascending: false });
-
-      if (!yuklerError && yuklerData) {
-        setRealYukIlanlari(yuklerData);
-      }
-
-      // Calculate state values dynamically
-      const totalIlanCount = (araclarData?.length || 0) + (yuklerData?.length || 0);
-      setUserStats(prev => ({
-        ...prev,
-        ilanlar: totalIlanCount
-      }));
-
+      await profilAndIlanlariGetir(user.id);
       setYukleniyor(false);
     };
 
-    profilAndIlanlariGetir();
-  }, [router]);
+    baslat();
+  }, [router, profilAndIlanlariGetir]);
 
   const handleProfilGuncelle = async (e) => {
     e.preventDefault();
@@ -112,6 +118,53 @@ export default function ProfilePage() {
       setMesaj({ tip: 'hata', icerik: 'Profil güncellenirken bir hata oluştu: ' + error.message });
     } else {
       setMesaj({ tip: 'basari', icerik: 'Profil bilgileriniz başarıyla kaydedildi!' });
+      setTimeout(() => setMesaj({ tip: '', icerik: '' }), 4000);
+    }
+  };
+
+  // DELETE ACTION OPERATIONS
+  const handleIlanSil = async (id, tip) => {
+    if (!window.confirm("Bu ilanı kalıcı olarak silmek istediğinize emin misiniz?")) return;
+    
+    const tabloAdi = tip === 'yuk' ? 'yuk_ilanlari' : 'araclar';
+    const { error } = await supabase.from(tabloAdi).delete().eq('id', id);
+
+    if (error) {
+      setMesaj({ tip: 'hata', icerik: 'İlan silinirken bir hata oluştu: ' + error.message });
+    } else {
+      setMesaj({ tip: 'basari', icerik: 'İlan başarıyla kaldırıldı.' });
+      await profilAndIlanlariGetir(kullanici.id);
+      setTimeout(() => setMesaj({ tip: '', icerik: '' }), 4000);
+    }
+  };
+
+  // UPDATE SUBMISSION FOR EDITED CONTENT
+  const handleIlanGuncelle = async (e) => {
+    e.preventDefault();
+    setIslemde(true);
+    const tabloAdi = duzenlemeTipi === 'yuk' ? 'yuk_ilanlari' : 'araclar';
+
+    // Yalnızca formda düzenlenebilen alanları gönder
+    const alanlar = duzenlemeTipi === 'yuk'
+      ? ['nereden', 'nereye', 'yuk_turu', 'agirlik_ton', 'arac_tipi_gereksinimi', 'yukleme_tarihi', 'bosaltma_tarihi', 'telefon_numarasi', 'is_active']
+      : ['mevcut_konum_sehir', 'arac_tipi', 'iletisim', 'aciklama', 'is_active'];
+    const guncelleme = Object.fromEntries(alanlar.map((alan) => [alan, duzenlenenIlan[alan]]));
+    if (duzenlemeTipi === 'yuk') {
+      guncelleme.bosaltma_tarihi = guncelleme.bosaltma_tarihi || null;
+    }
+
+    const { error } = await supabase
+      .from(tabloAdi)
+      .update(guncelleme)
+      .eq('id', duzenlenenIlan.id);
+
+    setIslemde(false);
+    if (error) {
+      setMesaj({ tip: 'hata', icerik: 'İlan güncellenirken bir hata oluştu: ' + error.message });
+    } else {
+      setMesaj({ tip: 'basari', icerik: 'İlan başarıyla güncellendi!' });
+      setDuzenlenenIlan(null);
+      await profilAndIlanlariGetir(kullanici.id);
       setTimeout(() => setMesaj({ tip: '', icerik: '' }), 4000);
     }
   };
@@ -222,7 +275,7 @@ export default function ProfilePage() {
             onClick={() => setProfilTab("ilanlarim")} 
             className={`pb-3 px-3 sm:px-4 text-xs font-black tracking-tight uppercase border-b-2 whitespace-nowrap transition-all ${aktifTab === 'ilanlarim' ? 'border-[#f58220] text-[#f58220]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
           >
-            Aktif İlanlarım ({userStats.ilanlar})
+            İlanlarım ({userStats.ilanlar})
           </button>
           <button 
             onClick={() => setProfilTab("teklifler")} 
@@ -360,20 +413,30 @@ export default function ProfilePage() {
                         <div>
                           <div className="flex justify-between items-center mb-3">
                             <span className="text-sm font-black text-[#1e3a5f]">
-                              {ilan.nereden || ilan.yukleme_yeri || 'Belirtilmedi'} → {ilan.nereye || ilan.teslim_yeri || 'Belirtilmedi'}
+                              {ilan.nereden || 'Belirtilmedi'} → {ilan.nereye || 'Belirtilmedi'}
                             </span>
                             <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-50 text-[#f58220] border border-orange-100">
-                              {ilan.durum || 'Aktif'}
+                              {ilan.is_active ? 'Aktif' : 'Pasif'}
                             </span>
                           </div>
                           <div className="grid grid-cols-2 gap-2 text-xs font-bold text-gray-500 mb-4">
-                            <div><span className="text-[10px] block text-gray-400 font-normal uppercase">Yük Tipi</span>{ilan.yuk_tipi || ilan.arac_tipi || 'Kuru Yük'}</div>
-                            <div><span className="text-[10px] block text-gray-400 font-normal uppercase">Tarih</span>{ilan.olusturulma_tarihi ? new Date(ilan.olusturulma_tarihi).toLocaleDateString('tr-TR') : '—'}</div>
+                            <div><span className="text-[10px] block text-gray-400 font-normal uppercase">Yük Tipi</span>{ilan.yuk_turu || 'Kuru Yük'}</div>
+                            <div><span className="text-[10px] block text-gray-400 font-normal uppercase">Ağırlık</span>{ilan.agirlik_ton ? `${ilan.agirlik_ton} Ton` : 'Belirtilmedi'}</div>
                           </div>
                         </div>
                         <div className="flex gap-2 pt-3 border-t border-gray-50">
-                          <button className="flex-1 py-2.5 bg-gray-50 text-gray-700 font-black text-[10px] rounded-xl border border-gray-100 hover:bg-gray-100 transition uppercase">Düzenle</button>
-                          <button className="flex-1 py-2.5 bg-red-50 text-red-500 font-black text-[10px] rounded-xl border border-red-100 hover:bg-red-100 transition uppercase">Kaldır</button>
+                          <button 
+                            onClick={() => { setDuzenlenenIlan({ ...ilan }); setDuzenlemeTipi('yuk'); }}
+                            className="flex-1 py-2.5 bg-gray-50 text-gray-700 font-black text-[10px] rounded-xl border border-gray-100 hover:bg-gray-100 transition uppercase flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <Edit3 size={12}/> Düzenle
+                          </button>
+                          <button 
+                            onClick={() => handleIlanSil(ilan.id, 'yuk')}
+                            className="flex-1 py-2.5 bg-red-50 text-red-500 font-black text-[10px] rounded-xl border border-red-100 hover:bg-red-100 transition uppercase flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 size={12}/> Kaldır
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -400,7 +463,7 @@ export default function ProfilePage() {
                               <MapPin size={14} className="text-[#f58220]" /> {ilan.mevcut_konum_sehir}
                             </span>
                             <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-green-50 text-green-600 border border-green-100">
-                              {ilan.is_active !== false ? 'Müsait' : 'Pasif'}
+                              {ilan.is_active ? 'Müsait' : 'Pasif'}
                             </span>
                           </div>
                           <div className="grid grid-cols-2 gap-2 text-xs font-bold text-gray-500 mb-4">
@@ -409,8 +472,18 @@ export default function ProfilePage() {
                           </div>
                         </div>
                         <div className="flex gap-2 pt-3 border-t border-gray-50">
-                          <button className="flex-1 py-2.5 bg-gray-50 text-gray-700 font-black text-[10px] rounded-xl border border-gray-100 hover:bg-gray-100 transition uppercase">Düzenle</button>
-                          <button className="flex-1 py-2.5 bg-red-50 text-red-500 font-black text-[10px] rounded-xl border border-red-100 hover:bg-red-100 transition uppercase">Kaldır</button>
+                          <button 
+                            onClick={() => { setDuzenlenenIlan({ ...ilan }); setDuzenlemeTipi('arac'); }}
+                            className="flex-1 py-2.5 bg-gray-50 text-gray-700 font-black text-[10px] rounded-xl border border-gray-100 hover:bg-gray-100 transition uppercase flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <Edit3 size={12}/> Düzenle
+                          </button>
+                          <button 
+                            onClick={() => handleIlanSil(ilan.id, 'arac')}
+                            className="flex-1 py-2.5 bg-red-50 text-red-500 font-black text-[10px] rounded-xl border border-red-100 hover:bg-red-100 transition uppercase flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 size={12}/> Kaldır
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -438,6 +511,180 @@ export default function ProfilePage() {
         </div>
       </main>
 
+      {/* DYNAMIC EDIT INTERFACE POPUP MODAL */}
+      {duzenlenenIlan && (
+        <div className="fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white w-full max-w-lg rounded-2xl p-6 relative max-h-[90vh] overflow-y-auto shadow-xl">
+            <button 
+              onClick={() => setDuzenlenenIlan(null)} 
+              className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            <h3 className="text-md font-black text-[#1e3a5f] uppercase tracking-tight mb-4 italic flex items-center gap-2">
+              {duzenlemeTipi === 'yuk' ? <Box size={18} className="text-[#f58220]"/> : <Truck size={18} className="text-[#1e3a5f]"/>} 
+              İlan Verilerini Güncelle
+            </h3>
+
+            <form onSubmit={handleIlanGuncelle} className="space-y-4">
+              {duzenlemeTipi === 'yuk' ? (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-gray-400">Nereden</label>
+                      <input 
+                        type="text" required
+                        value={duzenlenenIlan.nereden || ''} 
+                        onChange={(e) => setDuzenlenenIlan({...duzenlenenIlan, nereden: e.target.value})}
+                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:border-[#f58220]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-gray-400">Nereye</label>
+                      <input 
+                        type="text" required
+                        value={duzenlenenIlan.nereye || ''} 
+                        onChange={(e) => setDuzenlenenIlan({...duzenlenenIlan, nereye: e.target.value})}
+                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:border-[#f58220]"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-gray-400">Yük Tipi / Cinsi</label>
+                      <input 
+                        type="text" required
+                        value={duzenlenenIlan.yuk_turu || ''} 
+                        onChange={(e) => setDuzenlenenIlan({...duzenlenenIlan, yuk_turu: e.target.value})}
+                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:border-[#f58220]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-gray-400">Ağırlık (Ton)</label>
+                      <input 
+                        type="number" step="any" required
+                        value={duzenlenenIlan.agirlik_ton || ''} 
+                        onChange={(e) => setDuzenlenenIlan({...duzenlenenIlan, agirlik_ton: e.target.value})}
+                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:border-[#f58220]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-gray-400">Yükleme Tarihi</label>
+                      <input 
+                        type="date" required
+                        value={duzenlenenIlan.yukleme_tarihi || ''} 
+                        onChange={(e) => setDuzenlenenIlan({...duzenlenenIlan, yukleme_tarihi: e.target.value})}
+                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:border-[#f58220]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-gray-400">Boşaltma Tarihi</label>
+                      <input 
+                        type="date"
+                        value={duzenlenenIlan.bosaltma_tarihi || ''} 
+                        onChange={(e) => setDuzenlenenIlan({...duzenlenenIlan, bosaltma_tarihi: e.target.value})}
+                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:border-[#f58220]"
+                      />
+                    </div>
+                  </div>
+
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-gray-400">Telefon Numarası</label>
+                      <input 
+                        type="tel" required
+                        value={duzenlenenIlan.telefon_numarasi || ''} 
+                        onChange={(e) => setDuzenlenenIlan({...duzenlenenIlan, telefon_numarasi: e.target.value})}
+                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:border-[#f58220]"
+                      />
+                    </div>
+
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-gray-400">Gereken Araç Tipi</label>
+                    <input 
+                      type="text"
+                      value={duzenlenenIlan.arac_tipi_gereksinimi || ''} 
+                      onChange={(e) => setDuzenlenenIlan({...duzenlenenIlan, arac_tipi_gereksinimi: e.target.value})}
+                      className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:border-[#f58220]"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-gray-400">Bulunduğu Şehir (Mevcut Konum)</label>
+                    <input 
+                      type="text" required
+                      value={duzenlenenIlan.mevcut_konum_sehir || ''} 
+                      onChange={(e) => setDuzenlenenIlan({...duzenlenenIlan, mevcut_konum_sehir: e.target.value})}
+                      className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:border-[#f58220]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-gray-400">Araç Tipi</label>
+                    <input 
+                      type="text" required
+                      value={duzenlenenIlan.arac_tipi || ''} 
+                      onChange={(e) => setDuzenlenenIlan({...duzenlenenIlan, arac_tipi: e.target.value})}
+                      className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:border-[#f58220]"
+                    />
+                  </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-gray-400">İletişim Numarası</label>
+                      <input 
+                        type="tel" required
+                        value={duzenlenenIlan.iletisim || ''} 
+                        onChange={(e) => setDuzenlenenIlan({...duzenlenenIlan, iletisim: e.target.value})}
+                        className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:border-[#f58220]"
+                      />
+                    </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-gray-400">Açıklama</label>
+                    <textarea 
+                      rows="3"
+                      value={duzenlenenIlan.aciklama || ''} 
+                      onChange={(e) => setDuzenlenenIlan({...duzenlenenIlan, aciklama: e.target.value})}
+                      className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:border-[#f58220] font-sans"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label className="text-[10px] font-black uppercase text-gray-400 block mb-1">İlan Durumu</label>
+                <select 
+                  value={duzenlenenIlan.is_active ? "true" : "false"}
+                  onChange={(e) => setDuzenlenenIlan({...duzenlenenIlan, is_active: e.target.value === "true"})}
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold outline-none focus:border-[#f58220]"
+                >
+                  <option value="true">Aktif / Yayında</option>
+                  <option value="false">Pasif / Kapatılmış</option>
+                </select>
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <button 
+                  type="button" onClick={() => setDuzenlenenIlan(null)}
+                  className="flex-1 py-3 border border-gray-200 rounded-xl font-black text-xs uppercase tracking-tight text-gray-500 hover:bg-gray-50 transition cursor-pointer"
+                >
+                  İptal Et
+                </button>
+                <button 
+                  type="submit" disabled={islemde}
+                  className="flex-1 py-3 bg-[#1e3a5f] text-white rounded-xl font-black text-xs uppercase tracking-tight hover:bg-black transition disabled:opacity-50 flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <Save size={14}/> {islemde ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* MOBILE HUD UNDERLAY FOOTER BAR */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-1 h-20 flex justify-between items-center z-[100] lg:hidden shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <Link href="/" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
@@ -460,7 +707,7 @@ export default function ProfilePage() {
           <Truck size={18} />
           <span className="text-[8px] font-black uppercase tracking-tighter italic">Araç Bul</span>
         </Link>
-        <Link href="/firmalar" className="flex flex-col items-center gap-1 text-[#1e3a5f] flex-1">
+        <Link href="/firmalar" className="flex flex-col items-center gap-1 text-gray-400 flex-1">
           <Building2 size={18} />
           <span className="text-[8px] font-black uppercase tracking-tighter italic">Firmalar</span>
         </Link>
