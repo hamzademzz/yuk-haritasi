@@ -6,7 +6,9 @@ import { ArrowRight, BadgeCheck, Box, Building2, CalendarDays, ChevronRight, Han
 import { supabase } from '../lib/supabase';
 import { useOturum, useSorgu } from '../lib/hooks';
 import { ARAC_TIPLERI, DESTEK_WHATSAPP, HIZMETLER, SEHIRLER, tarihYaz } from '../lib/constants';
+import { acikSutunlar } from '../lib/sutunlar';
 import { oneCikanFirmalar } from '../lib/oneCikanFirmalar';
+import { Belir, Kelimeler } from '../components/Hareket';
 import { Alan, BosDurum, HataDurumu, HizmetIkonu, Iskelet } from '../components/ui';
 
 const DESTEK_LINKI = `https://wa.me/${DESTEK_WHATSAPP}`;
@@ -99,7 +101,7 @@ function AramaKutusu() {
 function Bolum({ ustBaslik, baslik, aciklama, href, baglanti, children }) {
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 lg:py-16">
-      <div className="mb-5 flex items-end justify-between gap-4 lg:mb-8">
+      <Belir className="mb-5 flex items-end justify-between gap-4 lg:mb-8">
         <div>
           <p className="text-xs font-bold tracking-widest text-brand-dark uppercase">{ustBaslik}</p>
           <h2 className="mt-1 text-2xl font-bold tracking-tight text-navy lg:text-3xl">{baslik}</h2>
@@ -110,7 +112,7 @@ function Bolum({ ustBaslik, baslik, aciklama, href, baglanti, children }) {
             {baglanti} <ArrowRight size={15} />
           </Link>
         )}
-      </div>
+      </Belir>
       {children}
       {href && <Link href={href} className="btn mt-4 w-full border border-slate-300 bg-white text-navy sm:hidden">{baglanti} <ArrowRight size={16} /></Link>}
     </section>
@@ -128,12 +130,12 @@ function Durak({ son, gecikme, children }) {
 
 function GuncelIlanlar() {
   const { veri, hata, yukleniyor, yenile } = useSorgu('son-yukler', () =>
-    supabase.from('yuk_ilanlari').select('*').eq('is_active', true).order('olusturulma_tarihi', { ascending: false }).limit(4)
+    supabase.from('yuk_ilanlari').select(acikSutunlar('yuk_ilanlari')).eq('is_active', true).order('olusturulma_tarihi', { ascending: false }).limit(4)
   );
 
   return (
     <Bolum ustBaslik="Yeni eklenenler" baslik="Güncel Yük İlanları" href="/yukler" baglanti="Tüm yük ilanları">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+      <div className="sirali grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
         {yukleniyor ? <Iskelet adet={4} className="h-48" />
           : hata ? <HataDurumu onTekrar={yenile} />
           : veri.length === 0 ? <BosDurum Ikon={Box} mesaj="Henüz aktif yük ilanı yok." />
@@ -172,15 +174,15 @@ export default function HomePage() {
             <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold text-slate-200">
               <MapPin size={13} aria-hidden="true" className="text-brand" /> Türkiye&apos;nin Lojistik Platformu
             </p>
-            <h1 className="mt-4 text-4xl leading-[1.1] font-bold tracking-tight lg:text-6xl">Lojistik Dünyası <span className="block text-brand">Tek Platformda</span></h1>
-            <p className="mx-auto mt-4 max-w-md text-base text-slate-300 lg:mx-0 lg:text-lg">Doğru yük, doğru araç ve güvenilir firmalarla hemen buluşun.</p>
-            <ul className="mt-6 hidden flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-slate-200 lg:flex">
+            <h1 className="mt-4 text-4xl leading-[1.1] font-bold tracking-tight lg:text-6xl"><Kelimeler satirlar={['Lojistik Dünyası', { metin: 'Tek Platformda', className: 'text-brand' }]} /></h1>
+            <p className="yuksel mx-auto mt-4 max-w-md text-base text-slate-300 lg:mx-0 lg:text-lg" style={{ animationDelay: '450ms' }}>Doğru yük, doğru araç ve güvenilir firmalarla hemen buluşun.</p>
+            <ul className="yuksel mt-6 hidden flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-slate-200 lg:flex" style={{ animationDelay: '600ms' }}>
               {['Ücretsiz üyelik', 'Komisyonsuz iş', 'Doğrudan iletişim'].map((m) => (
                 <li key={m} className="flex items-center gap-2"><BadgeCheck size={17} aria-hidden="true" className="text-brand" /> {m}</li>
               ))}
             </ul>
           </div>
-          <AramaKutusu />
+          <div className="yuksel w-full lg:w-auto lg:min-w-[32rem]" style={{ animationDelay: '300ms' }}><AramaKutusu /></div>
         </div>
       </section>
 
@@ -197,33 +199,55 @@ export default function HomePage() {
 
       <GuncelIlanlar />
 
+      {/* Ortalanmış büyük başlık, bölmeli ızgara ve altında koyu şerit */}
       <div className="border-y border-slate-200 bg-white">
-        <Bolum ustBaslik="Hizmetler" baslik="Lojistik Hizmetler" aciklama="İhtiyacınız olan hizmeti veren firmalara tek dokunuşla ulaşın." href="/firmalar" baglanti="Tüm firmalar">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-            {HIZMETLER.map((h) => (
-              <Link key={h.anahtar} href={`/firmalar?hizmet=${h.anahtar}`} className="card group flex flex-col gap-3 p-4 transition hover:-translate-y-0.5 hover:border-brand/60 hover:shadow-lg active:scale-[0.98] lg:p-5">
-                <HizmetIkonu Ikon={h.Ikon} className="size-12 transition group-hover:!bg-brand group-hover:text-white" boyut={24} />
-                <span>
-                  <span className="block text-sm leading-snug font-bold text-navy lg:text-base">{h.ad}</span>
-                  <span className="mt-0.5 block text-xs text-slate-500 lg:text-sm">{h.alt}</span>
-                </span>
+        <section className="mx-auto max-w-6xl px-4 py-14 lg:py-24">
+          <Belir className="mx-auto mb-8 max-w-3xl text-center lg:mb-14">
+            <p className="text-xs font-bold tracking-[0.2em] text-brand-dark uppercase">Hizmetler</p>
+            <h2 className="mt-4 text-[2.25rem] leading-[1.05] font-semibold tracking-tight text-balance text-navy lg:text-6xl">
+              <span className="block">Hangi hizmet gerekiyorsa,</span>
+              <span className="block">tek yerde.</span>
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-base text-slate-500 lg:text-lg">İhtiyacınız olan hizmeti veren firmalara tek dokunuşla ulaşın.</p>
+          </Belir>
+          <Belir tur="buyu">
+            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-200 shadow-xl shadow-slate-900/5">
+              <div className="grid grid-cols-2 gap-px lg:grid-cols-4">
+                {HIZMETLER.map((h) => (
+                  <Link key={h.anahtar} href={`/firmalar?hizmet=${h.anahtar}`} className="group flex flex-col items-center gap-4 bg-white px-3 py-7 text-center transition-colors hover:bg-orange-50 active:bg-orange-50 lg:py-10">
+                    <HizmetIkonu Ikon={h.Ikon} className="size-14 !rounded-full border border-slate-200 !bg-white transition duration-300 group-hover:scale-110 group-hover:!border-brand group-hover:!bg-brand group-hover:text-white" boyut={26} />
+                    <span>
+                      <span className="block text-sm leading-snug font-bold text-navy lg:text-lg">{h.ad}</span>
+                      <span className="mt-1 block text-xs text-slate-500 lg:text-sm">{h.alt}</span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+              <Link href="/firmalar" className="flex flex-col items-center justify-center gap-2 bg-navy-dark px-4 py-6 text-center text-white sm:flex-row sm:gap-4">
+                <span className="font-bold">Yük<span className="text-brand">Haritası</span> firma rehberi</span>
+                <span className="inline-flex items-center gap-2 text-sm text-slate-300">Tüm firmaları görün <ArrowRight size={15} /></span>
               </Link>
-            ))}
-          </div>
-        </Bolum>
+            </div>
+          </Belir>
+        </section>
       </div>
 
       <Bolum ustBaslik="İş ortakları" baslik="Öne Çıkan Firmalar" href="/firmalar" baglanti="Firma rehberi">
         <div className="no-scrollbar -mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 lg:mx-0 lg:grid lg:grid-cols-5 lg:gap-4 lg:overflow-visible lg:px-0">
-          {oneCikanFirmalar.map((f) => (
-            <Link key={f.ad} href="/firmalar" className="card flex w-40 shrink-0 snap-start flex-col items-center p-4 text-center transition hover:border-slate-300 hover:shadow-lg lg:w-auto">
-              <span className="flex h-20 w-full items-center justify-center">
+          {oneCikanFirmalar.map((f, i) => (
+            <Belir key={f.ad} tur="buyu" gecikme={i * 90} className="grid w-60 shrink-0 snap-start lg:w-auto">
+            <Link href="/firmalar" className="card group flex flex-col overflow-hidden transition hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg">
+              {/* Tüm kartlarda aynı oranda görsel alanı */}
+              <span className="block aspect-[4/3] w-full overflow-hidden bg-white">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={f.logo} alt="" className="max-h-14 max-w-full object-contain" />
+                <img src={f.logo} alt={f.ad} className={`size-full transition duration-700 group-hover:scale-105 ${f.tur === 'logo' ? 'object-contain p-4' : 'object-cover'}`} />
               </span>
-              <span className="mt-2 w-full border-t border-slate-100 pt-3 text-sm font-bold text-navy">{f.ad}</span>
-              <span className="mt-0.5 flex items-center gap-1 text-xs text-slate-500"><MapPin size={12} aria-hidden="true" /> {f.sehir}</span>
+              <span className="flex flex-col items-center border-t border-slate-100 px-3 py-3.5 text-center">
+                <span className="text-sm font-bold text-navy lg:text-base">{f.ad}</span>
+                <span className="mt-0.5 flex items-center gap-1 text-xs text-slate-500"><MapPin size={12} aria-hidden="true" /> {f.sehir}</span>
+              </span>
             </Link>
+            </Belir>
           ))}
         </div>
       </Bolum>
@@ -232,10 +256,12 @@ export default function HomePage() {
         <Bolum ustBaslik="3 kolay adım" baslik="Nasıl Çalışır?">
           <ol className="grid gap-3 lg:grid-cols-3 lg:gap-4">
             {ADIMLAR.map(({ Ikon, baslik, tanim }, i) => (
-              <li key={baslik} className="relative flex gap-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-5 lg:flex-col lg:p-7">
+              <li key={baslik} className="grid">
+                <Belir gecikme={i * 120} className="relative flex gap-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-5 lg:flex-col lg:p-7">
                 <span aria-hidden="true" className="absolute top-2 right-4 text-5xl font-bold text-slate-200">{i + 1}</span>
                 <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-navy text-white"><Ikon size={22} strokeWidth={1.75} aria-hidden="true" /></span>
                 <div className="relative pr-6 lg:pr-0"><h3 className="font-bold text-navy lg:text-lg">{baslik}</h3><p className="mt-1 text-sm leading-relaxed text-slate-500">{tanim}</p></div>
+                </Belir>
               </li>
             ))}
           </ol>
@@ -243,7 +269,7 @@ export default function HomePage() {
       </div>
 
       <section className="mx-auto max-w-6xl px-4 py-10 lg:py-16">
-        <div className="relative isolate overflow-hidden rounded-3xl bg-navy px-6 py-8 text-white lg:flex lg:items-center lg:justify-between lg:gap-8 lg:px-12 lg:py-12">
+        <Belir tur="buyu" className="relative isolate overflow-hidden rounded-3xl bg-navy px-6 py-8 text-white lg:flex lg:items-center lg:justify-between lg:gap-8 lg:px-12 lg:py-12">
           <Truck aria-hidden="true" size={220} strokeWidth={1} className="absolute -right-8 -bottom-12 -z-10 text-white/[0.06]" />
           <div>
             <h2 className="text-2xl font-bold tracking-tight lg:text-3xl">{user ? 'Yeni bir ilan yayınlayın' : 'İşinizi büyütmeye bugün başlayın'}</h2>
@@ -257,7 +283,7 @@ export default function HomePage() {
               <MessageCircle size={17} /> WhatsApp Destek
             </a>
           </div>
-        </div>
+        </Belir>
       </section>
 
       <footer className="-mb-[calc(5.5rem+env(safe-area-inset-bottom))] bg-navy-dark px-4 pt-10 pb-[calc(7rem+env(safe-area-inset-bottom))] text-sm text-slate-400 lg:-mb-16 lg:pt-14 lg:pb-8">

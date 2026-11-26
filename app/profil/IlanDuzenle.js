@@ -1,6 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { bugun } from '../../lib/eslesme';
 import { Alan, Panel } from '../../components/ui';
 
 const ALANLAR = {
@@ -24,14 +25,17 @@ const ALANLAR = {
   ],
 };
 
-export default function IlanDuzenle({ ilan, tip, onKapat, onKaydet }) {
+// yeniden: süresi geçmiş veya kapatılmış bir yük ilanını yeni tarihle yayınlar
+export default function IlanDuzenle({ ilan, tip, yeniden, onKapat, onKaydet }) {
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [hata, setHata] = useState('');
 
   const kaydet = async (e) => {
     e.preventDefault();
     const form = Object.fromEntries(new FormData(e.currentTarget));
-    const degisiklik = { ...form, is_active: form.is_active === 'true' };
+    const degisiklik = yeniden
+      ? { ...form, is_active: true, olusturulma_tarihi: new Date().toISOString() }
+      : { ...form, is_active: form.is_active === 'true' };
     for (const alan of ALANLAR[tip]) {
       if (alan.bosIseNull && !degisiklik[alan.ad]) degisiklik[alan.ad] = null;
     }
@@ -46,21 +50,25 @@ export default function IlanDuzenle({ ilan, tip, onKapat, onKaydet }) {
   };
 
   return (
-    <Panel baslik="İlanı Düzenle" onKapat={onKapat}>
+    <Panel baslik={yeniden ? 'Yeniden Yayınla' : 'İlanı Düzenle'} onKapat={onKapat}>
       <form onSubmit={kaydet} className="grid grid-cols-2 gap-3">
         {ALANLAR[tip].map(({ ad, etiket, genis, type, step, min, required }) => (
           <Alan key={ad} etiket={etiket} className={genis ? 'col-span-2' : ''}>
-            <input className="input" name={ad} defaultValue={ilan[ad] ?? ''} type={type} step={step} min={min} required={required} />
+            <input
+              className="input" name={ad} type={type} step={step} required={required}
+              min={yeniden && type === 'date' ? bugun() : min}
+              defaultValue={yeniden && type === 'date' ? '' : ilan[ad] ?? ''}
+            />
           </Alan>
         ))}
-        <Alan etiket="İlan Durumu" className="col-span-2">
+        {!yeniden && <Alan etiket="İlan Durumu" className="col-span-2">
           <select className="input" name="is_active" defaultValue={String(!!ilan.is_active)}>
             <option value="true">Aktif / Yayında</option>
             <option value="false">Pasif / Kapatılmış</option>
           </select>
-        </Alan>
+        </Alan>}
         {hata && <p role="alert" className="col-span-2 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{hata}</p>}
-        <button type="submit" disabled={kaydediliyor} className="btn btn-navy col-span-2">{kaydediliyor ? 'Kaydediliyor…' : 'Değişiklikleri Kaydet'}</button>
+        <button type="submit" disabled={kaydediliyor} className="btn btn-navy col-span-2">{kaydediliyor ? 'Kaydediliyor…' : yeniden ? 'Yeniden Yayınla' : 'Değişiklikleri Kaydet'}</button>
       </form>
     </Panel>
   );

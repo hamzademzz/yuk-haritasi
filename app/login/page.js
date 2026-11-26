@@ -29,6 +29,7 @@ export default function LoginPage() {
       <form onSubmit={girisYap} className="grid gap-4">
         <Alan etiket="E-posta"><input className="input" name="email" type="email" autoComplete="email" required /></Alan>
         <Alan etiket="Şifre"><input className="input" name="password" type="password" autoComplete="current-password" required /></Alan>
+        <Link href="/sifremi-unuttum" className="-mt-2 justify-self-end py-1 text-sm font-semibold text-navy underline">Şifremi unuttum</Link>
         {hata && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{hata}</p>}
         <button disabled={yukleniyor} className="btn btn-navy">{yukleniyor ? 'Giriş yapılıyor…' : 'Giriş Yap'}</button>
       </form>

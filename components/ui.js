@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Lock, X } from 'lucide-react';
+import { Kelimeler } from './Hareket';
 
 // Telefonda alttan açılan panel, geniş ekranda ortalanmış pencere.
 // <dialog> odak yönetimini ve Esc ile kapatmayı kendisi sağlar.
@@ -22,6 +23,7 @@ export function Panel({ baslik, onKapat, children }) {
     <dialog
       ref={ref}
       aria-label={baslik}
+      data-lenis-prevent
       onCancel={(e) => { e.preventDefault(); onKapat(); }}
       className="panel"
     >
@@ -70,10 +72,10 @@ export function Alan({ etiket, className = '', children }) {
 
 export function SayfaBasligi({ baslik, aciklama, children }) {
   return (
-    <section className="bg-navy px-4 pt-2 pb-14 text-white lg:pt-12 lg:pb-20">
+    <section className="hero-desen bg-navy px-4 pt-2 pb-14 text-white lg:pt-12 lg:pb-20">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight lg:text-4xl">{baslik}</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight lg:text-4xl"><Kelimeler satirlar={[baslik]} /></h1>
           <p className="mt-1 text-sm text-slate-300">{aciklama}</p>
         </div>
         {children}

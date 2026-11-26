@@ -12,7 +12,7 @@ export default function IlanVerPage() {
   return (
     <>
       <SayfaBasligi baslik="İlan Ver" aciklama="Yayınlamak istediğiniz ilan türünü seçin." />
-      <div className="mx-auto -mt-8 grid max-w-6xl gap-3 px-4 lg:-mt-10 lg:grid-cols-3 lg:gap-4">
+      <div className="sirali mx-auto -mt-8 grid max-w-6xl gap-3 px-4 lg:-mt-10 lg:grid-cols-3 lg:gap-4">
         {TURLER.map(({ href, Ikon, baslik, aciklama }) => (
           <Link key={href} href={href} className="card flex items-center gap-4 p-4 transition hover:border-brand hover:shadow-md active:scale-[0.99] lg:flex-col lg:p-8 lg:text-center">
             <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-brand text-white"><Ikon size={28} /></span>

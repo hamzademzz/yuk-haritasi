@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function AuthKart({ baslik, aciklama, children }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-navy sm:items-center sm:justify-center sm:p-6">
+    <div className="hero-desen flex min-h-dvh flex-col bg-navy sm:items-center sm:justify-center sm:p-6">
       <div className="px-6 pt-[calc(1rem+env(safe-area-inset-top))] pb-8 text-white sm:w-full sm:max-w-md sm:px-0 sm:pt-0">
         <Link href="/" className="-ml-1 inline-flex items-center gap-1 py-2 text-sm font-semibold text-slate-300 hover:text-white">
           <ArrowLeft size={16} /> Ana Sayfa

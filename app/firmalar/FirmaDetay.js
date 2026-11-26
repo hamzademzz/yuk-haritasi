@@ -1,9 +1,10 @@
 "use client";
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2, Lock, Mail, MapPin, MessageCircle, Phone, Star } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Lock, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import { useOturum } from '../../lib/hooks';
 import { HIZMETLER, whatsappLinki } from '../../lib/constants';
+import Puan from '../../components/Puan';
 import { HizmetIkonu } from '../../components/ui';
 
 export const VARSAYILAN_LOGO = 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=300';
@@ -39,7 +40,7 @@ export default function FirmaDetay({ firma, onGeri }) {
 
   return (
     <>
-      <section className="bg-navy px-4 pt-2 pb-6 text-white lg:py-10">
+      <section className="hero-desen bg-navy px-4 pt-2 pb-6 text-white lg:py-10">
         <div className="mx-auto max-w-4xl">
           <button onClick={onGeri} className="mb-4 inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold hover:bg-white/20">
             <ArrowLeft size={16} /> Rehbere Dön
@@ -51,7 +52,7 @@ export default function FirmaDetay({ firma, onGeri }) {
             </div>
             <div className="min-w-0">
               <h1 className="text-xl font-extrabold break-words lg:text-3xl">{firma.firma_adi}</h1>
-              <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-amber-300"><Star size={14} fill="currentColor" /> {firma.puan || '4.8'} ({firma.yorum_sayisi || '0'})</p>
+              <Puan firma={firma} className="mt-1 text-sm text-amber-300" />
               <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-green-600 px-2.5 py-1 text-xs font-bold"><CheckCircle2 size={12} /> Doğrulanmış Üye</span>
             </div>
           </div>

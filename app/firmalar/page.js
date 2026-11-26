@@ -1,17 +1,15 @@
 "use client";
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Building2, MapPin, Plus, Search, Star } from 'lucide-react';
+import { Building2, MapPin, Plus, Search } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { adresDegistir, useEklePaneli, useSorgu } from '../../lib/hooks';
+import { adresDegistir, useEklePaneli, useOturum, useSorgu } from '../../lib/hooks';
+import { sutunlar } from '../../lib/sutunlar';
 import { HIZMETLER, SEHIRLER } from '../../lib/constants';
+import Puan from '../../components/Puan';
 import { Alan, BosDurum, GirisPaneli, HataDurumu, Iskelet, Panel, SayfaBasligi } from '../../components/ui';
 import FirmaDetay, { VARSAYILAN_LOGO } from './FirmaDetay';
 import FirmaFormu from './FirmaFormu';
-
-// TC kimlik ve vergi numarası bilerek istenmiyor
-const FIRMA_SUTUNLARI = 'id, logo_url, telefon, whatsapp, eposta, firma_adi, hakkimizda, merkez_konum, hizmet_bolgeleri, uye_no, puan, yorum_sayisi, parsiyel_tasima';
-const EK_HIZMET_SUTUNLARI = 'oto_kurtarici, oto_tasiyici, vinc_hizmetleri, forklift_hizmetleri, depolama, is_makinalari, paketleme';
 
 function Filtre({ ilk }) {
   const [alanlar, setAlanlar] = useState(ilk);
@@ -50,18 +48,14 @@ function FirmaRehberi() {
   const filtreVar = Object.values(secim).some(Boolean);
   const seciliId = searchParams.get('id');
   const { panel, ac, kapat, girisIste } = useEklePaneli();
+  const { user } = useOturum();
 
-  const { veri, hata, yukleniyor, yenile } = useSorgu(anahtar, async () => {
-    const sorgula = (sutunlar) => {
-      let sorgu = supabase.from('firmalar').select(sutunlar).eq('is_active', true);
-      if (secim.arama) sorgu = sorgu.ilike('firma_adi', `%${secim.arama}%`);
-      if (secim.sehir) sorgu = sorgu.ilike('merkez_konum', `%${secim.sehir}%`);
-      if (secim.hizmet) sorgu = sorgu.eq(secim.hizmet, true);
-      return sorgu.order('firma_adi', { ascending: true });
-    };
-    const sonuc = await sorgula(`${FIRMA_SUTUNLARI}, ${EK_HIZMET_SUTUNLARI}`);
-    // 42703: sütun yok. Hizmet sütunları eklenene kadar listeyi onlarsız getir.
-    return sonuc.error?.code === '42703' ? sorgula(FIRMA_SUTUNLARI) : sonuc;
+  const { veri, hata, yukleniyor, yenile } = useSorgu(`${anahtar}|${user?.id ?? ''}`, async () => {
+    let sorgu = supabase.from('firmalar').select(await sutunlar('firmalar')).eq('is_active', true);
+    if (secim.arama) sorgu = sorgu.ilike('firma_adi', `%${secim.arama}%`);
+    if (secim.sehir) sorgu = sorgu.ilike('merkez_konum', `%${secim.sehir}%`);
+    if (secim.hizmet) sorgu = sorgu.eq(secim.hizmet, true);
+    return sorgu.order('firma_adi', { ascending: true });
   });
 
   // Seçili firma adresten okunur; telefonun geri tuşu listeye döndürür
@@ -87,7 +81,7 @@ function FirmaRehberi() {
       <div className="mx-auto -mt-8 max-w-6xl px-4 lg:-mt-10">
         <Filtre key={anahtar} ilk={secim} />
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:mt-6 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
+        <div className="sirali mt-4 grid gap-3 sm:grid-cols-2 lg:mt-6 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
           {yukleniyor ? <Iskelet className="h-24 sm:h-44" />
             : hata ? <HataDurumu onTekrar={yenile} />
             : veri.length === 0 ? (
@@ -99,12 +93,12 @@ function FirmaRehberi() {
               <button key={firma.id} onClick={() => { adresDegistir(adres(firma.id)); window.scrollTo(0, 0); }} className="card flex cursor-pointer items-center gap-4 p-4 text-left transition hover:border-brand hover:shadow-md active:scale-[0.99] sm:flex-col sm:text-center">
                 <span className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50 p-1.5">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={firma.logo_url || VARSAYILAN_LOGO} alt="" loading="lazy" className="max-h-full max-w-full object-contain" />
+                  <img src={firma.logo_url || VARSAYILAN_LOGO} alt="" loading="lazy" className="resim-gir max-h-full max-w-full object-contain" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-extrabold break-words text-navy">{firma.firma_adi}</span>
                   <span className="mt-1 flex items-center gap-1 text-xs font-semibold text-slate-500 sm:justify-center"><MapPin size={12} className="text-brand" /> {firma.merkez_konum || 'Türkiye'}</span>
-                  <span className="mt-1 flex items-center gap-1 text-xs font-bold text-amber-500 sm:justify-center"><Star size={12} fill="currentColor" /> {firma.puan || '4.8'} ({firma.yorum_sayisi || '0'})</span>
+                  <Puan firma={firma} className="mt-1 text-xs text-amber-500 sm:justify-center" />
                 </span>
               </button>
             ))}

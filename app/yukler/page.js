@@ -3,7 +3,8 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Box, MapPin, Plus, Search } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { adresDegistir, useEklePaneli, useSorgu } from '../../lib/hooks';
+import { adresDegistir, useEklePaneli, useIlanSahibi, useOturum, useSorgu } from '../../lib/hooks';
+import { sutunlar } from '../../lib/sutunlar';
 import { ARAC_TIPLERI, SEHIRLER, tarihYaz } from '../../lib/constants';
 import { Alan, BosDurum, GirisPaneli, HataDurumu, Iskelet, Panel, SayfaBasligi } from '../../components/ui';
 import { Bilgi, IletisimSatiri } from '../../components/IlanKarti';
@@ -34,6 +35,7 @@ function Filtre({ ilk }) {
 function YukFormu({ onKaydedildi, onGirisGerekli }) {
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [hata, setHata] = useState('');
+  const sahip = useIlanSahibi();
 
   const kaydet = async (e) => {
     e.preventDefault();
@@ -60,6 +62,8 @@ function YukFormu({ onKaydedildi, onGirisGerekli }) {
     }
   };
 
+  if (!sahip) return <p className="py-10 text-center text-sm text-slate-500">Form hazırlanıyor…</p>;
+
   return (
     <form onSubmit={kaydet} className="grid grid-cols-2 gap-3">
       <Alan etiket="Yükün Cinsi *" className="col-span-2"><input className="input" name="yuk_turu" required placeholder="Örn: Demir, Paletli" /></Alan>
@@ -69,8 +73,8 @@ function YukFormu({ onKaydedildi, onGirisGerekli }) {
       <Alan etiket="Nereye *"><input className="input" name="nereye" list="sehirler" required placeholder="Şehir" /></Alan>
       <Alan etiket="Yükleme Tarihi *"><input className="input" name="yukleme_tarihi" required type="date" /></Alan>
       <Alan etiket="Boşaltma Tarihi"><input className="input" name="bosaltma_tarihi" type="date" /></Alan>
-      <Alan etiket="Ad Soyad *" className="col-span-2 sm:col-span-1"><input className="input" name="ilan_sahibi_ad_soyad" required autoComplete="name" /></Alan>
-      <Alan etiket="Telefon *" className="col-span-2 sm:col-span-1"><input className="input" name="telefon_numarasi" required type="tel" autoComplete="tel" placeholder="05XX XXX XX XX" /></Alan>
+      <Alan etiket="Ad Soyad *" className="col-span-2 sm:col-span-1"><input className="input" name="ilan_sahibi_ad_soyad" defaultValue={sahip.ad} required autoComplete="name" /></Alan>
+      <Alan etiket="Telefon *" className="col-span-2 sm:col-span-1"><input className="input" name="telefon_numarasi" defaultValue={sahip.telefon} required type="tel" autoComplete="tel" placeholder="05XX XXX XX XX" /></Alan>
       {hata && <p role="alert" className="col-span-2 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{hata}</p>}
       <button type="submit" disabled={kaydediliyor} className="btn btn-brand col-span-2">{kaydediliyor ? 'Kaydediliyor…' : 'İlanı Yayınla'}</button>
     </form>
@@ -83,9 +87,10 @@ function YukListesi() {
   const anahtar = JSON.stringify(secim);
   const filtreVar = Object.values(secim).some(Boolean);
   const { panel, ac, kapat, girisIste } = useEklePaneli();
+  const { user, hazir } = useOturum();
 
-  const { veri, hata, yukleniyor, yenile } = useSorgu(anahtar, () => {
-    let sorgu = supabase.from('yuk_ilanlari').select('*').eq('is_active', true);
+  const { veri, hata, yukleniyor, yenile } = useSorgu(`${anahtar}|${user?.id ?? ''}`, async () => {
+    let sorgu = supabase.from('yuk_ilanlari').select(await sutunlar('yuk_ilanlari')).eq('is_active', true);
     if (secim.nereden) sorgu = sorgu.ilike('nereden', `%${secim.nereden}%`);
     if (secim.nereye) sorgu = sorgu.ilike('nereye', `%${secim.nereye}%`);
     if (secim.aracTipi) sorgu = sorgu.ilike('arac_tipi_gereksinimi', `%${secim.aracTipi}%`);
@@ -102,7 +107,7 @@ function YukListesi() {
       <div className="mx-auto -mt-8 max-w-6xl px-4 lg:-mt-10">
         <Filtre key={anahtar} ilk={secim} />
 
-        <div className="mt-4 grid gap-3 md:grid-cols-2 lg:mt-6 lg:gap-4 xl:grid-cols-3">
+        <div className="sirali mt-4 grid gap-3 md:grid-cols-2 lg:mt-6 lg:gap-4 xl:grid-cols-3">
           {yukleniyor ? <Iskelet />
             : hata ? <HataDurumu onTekrar={yenile} />
             : veri.length === 0 ? (
@@ -124,7 +129,7 @@ function YukListesi() {
                     <Bilgi etiket="Yükleme">{tarihYaz(yuk.yukleme_tarihi) || 'Acil'}</Bilgi>
                   </dl>
                 </div>
-                <IletisimSatiri ad={yuk.ilan_sahibi_ad_soyad || 'İsimsiz'} altYazi="Doğrulanmış ilan sahibi" telefon={yuk.telefon_numarasi} />
+                <IletisimSatiri ad={yuk.ilan_sahibi_ad_soyad || 'İsimsiz'} girisGerekli={hazir && !user} altYazi="Doğrulanmış ilan sahibi" telefon={yuk.telefon_numarasi} />
               </article>
             ))}
         </div>

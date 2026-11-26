@@ -1,4 +1,5 @@
-import { Phone, User } from 'lucide-react';
+import Link from 'next/link';
+import { Lock, Phone, User } from 'lucide-react';
 
 export function Bilgi({ etiket, children }) {
   return (
@@ -9,7 +10,7 @@ export function Bilgi({ etiket, children }) {
   );
 }
 
-export function IletisimSatiri({ ad, altYazi, telefon }) {
+export function IletisimSatiri({ ad, altYazi, telefon, girisGerekli }) {
   return (
     <div className="mt-auto flex items-center gap-3 border-t border-slate-100 p-3 pl-4">
       <span className="grid size-10 shrink-0 place-items-center rounded-full bg-slate-100 text-navy"><User size={18} /></span>
@@ -17,7 +18,9 @@ export function IletisimSatiri({ ad, altYazi, telefon }) {
         <p className="truncate text-sm font-bold">{ad}</p>
         <p className="truncate text-xs text-slate-400">{altYazi}</p>
       </div>
-      {telefon && (
+      {girisGerekli ? (
+        <Link href="/login" className="btn btn-navy shrink-0 !px-4"><Lock size={15} /> Giriş yap, ara</Link>
+      ) : telefon && (
         <a href={`tel:${telefon}`} className="btn btn-call shrink-0 !px-4"><Phone size={17} /> Ara</a>
       )}
     </div>

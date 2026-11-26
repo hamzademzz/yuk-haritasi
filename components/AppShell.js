@@ -110,7 +110,7 @@ function AltSekmeler() {
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
-  const sade = pathname === '/login' || pathname === '/register';
+  const sade = ['/login', '/register', '/sifremi-unuttum', '/sifre-yenile'].includes(pathname);
 
   if (sade) return <main>{children}</main>;
 

@@ -1,94 +1,41 @@
 "use client";
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { AlertCircle, Box, CheckCircle, Edit3, LogOut, Plus, Trash2, Truck, User } from 'lucide-react';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { AlertCircle, CheckCircle, User } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useOturum, useSorgu } from '../../lib/hooks';
-import { cikisYap } from '../../components/AppShell';
-import { Alan, BosDurum, HataDurumu, Iskelet } from '../../components/ui';
+import { adresDegistir, useOturum, useSorgu } from '../../lib/hooks';
+import { tumSutunlar } from '../../lib/sutunlar';
+import { HataDurumu, Iskelet } from '../../components/ui';
+import Ilanlarim, { ilanDurumu } from './Ilanlarim';
+import Eslesmeler from './Eslesmeler';
+import Firmam from './Firmam';
+import Hesap, { ROLLER } from './Hesap';
 import IlanDuzenle from './IlanDuzenle';
 
-const ROLLER = [
-  ['Firma / Yük Sahibi', 'Firma / Yük Sahibi'],
-  ['Bireysel Nakliyeci', 'Bireysel Nakliyeci / Sürücü'],
-  ['Lojistik Şirketi', 'Lojistik Şirketi (Araç & Filo Sahibi)'],
-];
-
-const SEKMELER = [['ilanlar', 'İlanlarım'], ['hesap', 'Hesabım'], ['teklifler', 'Teklifler']];
-
-function HesapFormu({ userId, profil, onSonuc }) {
-  const [kaydediliyor, setKaydediliyor] = useState(false);
-
-  const kaydet = async (e) => {
-    e.preventDefault();
-    const degisiklik = Object.fromEntries(new FormData(e.currentTarget));
-    setKaydediliyor(true);
-    const { data, error } = await supabase.from('profiles').update(degisiklik).eq('id', userId).select('id');
-    setKaydediliyor(false);
-    if (error) onSonuc('hata', `Profil güncellenemedi: ${error.message}`);
-    else if (!data.length) onSonuc('hata', 'Profil güncellenemedi. Profil kaydı bulunamadı veya izniniz yok.');
-    else onSonuc('basari', 'Profil bilgileriniz kaydedildi.', true);
-  };
-
-  return (
-    <form onSubmit={kaydet} className="card grid max-w-3xl grid-cols-2 gap-3 p-4 lg:p-6">
-      <Alan etiket="Adınız"><input className="input" name="first_name" required defaultValue={profil.first_name || ''} autoComplete="given-name" /></Alan>
-      <Alan etiket="Soyadınız"><input className="input" name="last_name" required defaultValue={profil.last_name || ''} autoComplete="family-name" /></Alan>
-      <Alan etiket="Telefon Numarası" className="col-span-2 sm:col-span-1"><input className="input" name="phone" type="tel" required defaultValue={profil.phone || ''} autoComplete="tel" /></Alan>
-      <Alan etiket="Platform Rolü" className="col-span-2 sm:col-span-1">
-        {/* Veritabanı varsayılanı 'user' seçeneklerde yok; ilk seçeneği göster */}
-        <select className="input" name="rol" defaultValue={ROLLER.some(([v]) => v === profil.rol) ? profil.rol : ROLLER[0][0]}>
-          {ROLLER.map(([v, ad]) => <option key={v} value={v}>{ad}</option>)}
-        </select>
-      </Alan>
-      <button type="submit" disabled={kaydediliyor} className="btn btn-navy col-span-2">{kaydediliyor ? 'Kaydediliyor…' : 'Değişiklikleri Kaydet'}</button>
-    </form>
-  );
-}
-
-function IlanBolumu({ baslik, Ikon, ilanlar, bosMesaj, ozet, onDuzenle, onSil }) {
-  return (
-    <section>
-      <h2 className="mb-3 flex items-center gap-2 font-extrabold text-navy"><Ikon size={18} className="text-brand" /> {baslik} ({ilanlar.length})</h2>
-      <div className="grid gap-3 md:grid-cols-2">
-        {ilanlar.length === 0 ? <BosDurum mesaj={bosMesaj} /> : ilanlar.map((ilan) => {
-          const [ust, alt] = ozet(ilan);
-          return (
-            <article key={ilan.id} className="card p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-extrabold break-words text-navy">{ust}</p>
-                  <p className="mt-1 text-sm break-words text-slate-500">{alt}</p>
-                </div>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${ilan.is_active ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{ilan.is_active ? 'Aktif' : 'Pasif'}</span>
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <button onClick={() => onDuzenle(ilan)} className="btn btn-ghost !min-h-11"><Edit3 size={15} /> Düzenle</button>
-                <button onClick={() => onSil(ilan)} className="btn btn-danger !min-h-11"><Trash2 size={15} /> Kaldır</button>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
+const SEKMELER = [['ilanlar', 'İlanlarım'], ['eslesmeler', 'Eşleşmeler'], ['firmam', 'Firmam'], ['hesap', 'Hesabım']];
+const TABLO = { yuk: 'yuk_ilanlari', arac: 'araclar' };
 
 function ProfilIcerigi({ user }) {
-  const [sekme, setSekme] = useState('ilanlar');
+  const router = useRouter();
+  const istenen = useSearchParams().get('sekme');
+  const sekme = SEKMELER.some(([id]) => id === istenen) ? istenen : 'ilanlar';
   const [mesaj, setMesaj] = useState(null);
-  const [duzenlenen, setDuzenlenen] = useState(null); // { tip, ilan }
+  const [duzenlenen, setDuzenlenen] = useState(null); // { tip, ilan, yeniden? }
 
   const { veri, hata, yukleniyor, yenile } = useSorgu(`profil-${user.id}`, async () => {
-    const ilanlarim = (tablo) => supabase.from(tablo).select('*').eq('user_id', user.id).order('id', { ascending: false });
-    const [profil, yukler, araclar] = await Promise.all([
+    const benim = (tablo, secilen) => supabase.from(tablo).select(secilen).eq('user_id', user.id).order('id', { ascending: false });
+    const [profil, yukler, araclar, firmalar] = await Promise.all([
       supabase.from('profiles').select('first_name, last_name, phone, rol').eq('id', user.id).maybeSingle(),
-      ilanlarim('yuk_ilanlari'),
-      ilanlarim('araclar'),
+      benim('yuk_ilanlari', '*'),
+      benim('araclar', '*'),
+      benim('firmalar', `${tumSutunlar('firmalar')}, is_active`),
     ]);
-    const error = profil.error || yukler.error || araclar.error;
-    return { data: [{ profil: profil.data || {}, yukler: yukler.data || [], araclar: araclar.data || [] }], error };
+    // Firma sorgusu başarısız olsa da profilin geri kalanı açılır
+    if (firmalar.error) console.error('Firmalar yüklenemedi:', firmalar.error);
+    return {
+      data: [{ profil: profil.data || {}, yukler: yukler.data || [], araclar: araclar.data || [], firmalar: firmalar.data || [], firmaHatasi: !!firmalar.error }],
+      error: profil.error || yukler.error || araclar.error,
+    };
   });
 
   useEffect(() => {
@@ -102,41 +49,62 @@ function ProfilIcerigi({ user }) {
     if (tazele) yenile();
   };
 
-  const sil = async (tablo, ilan) => {
-    if (!window.confirm('Bu ilanı kalıcı olarak silmek istediğinize emin misiniz?')) return;
-    const { data, error } = await supabase.from(tablo).delete().eq('id', ilan.id).select('id');
-    if (error) sonuc('hata', `İlan silinemedi: ${error.message}`);
-    else if (!data.length) sonuc('hata', 'İlan silinemedi. Bu ilan için silme izniniz olmayabilir.');
-    else sonuc('basari', 'İlan kaldırıldı.', true);
+  // İzin kuralı işlemi engellerse hata dönmez, yalnızca sonuç boş gelir
+  const uygula = async (sorgu, basari, basarisiz) => {
+    const { data, error } = await sorgu.select('id');
+    if (error) sonuc('hata', `${basarisiz}: ${error.message}`);
+    else if (!data.length) sonuc('hata', `${basarisiz}. Bu işlem için izniniz olmayabilir.`);
+    else sonuc('basari', basari, true);
   };
 
-  // İlk yüklemeden sonraki tazelemelerde mevcut içerik ekranda kalır
+  const ilanIslemleri = {
+    onDuzenle: ({ tip, ilan }) => setDuzenlenen({ tip, ilan }),
+    onTamamla: ({ tip, ilan }) => uygula(supabase.from(TABLO[tip]).update({ is_active: false }).eq('id', ilan.id), 'İlan yayından kaldırıldı. Geçmiş bölümünde duruyor.', 'İlan güncellenemedi'),
+    onYeniden: ({ tip, ilan }) => {
+      // Yük ilanı için yeni yükleme tarihi gerekir
+      if (tip === 'yuk') setDuzenlenen({ tip, ilan, yeniden: true });
+      else uygula(supabase.from('araclar').update({ is_active: true, olusturulma_tarihi: new Date().toISOString() }).eq('id', ilan.id), 'Araç ilanı yeniden yayında.', 'İlan yayınlanamadı');
+    },
+    onSil: ({ tip, ilan }) => {
+      if (window.confirm('Bu ilanı kalıcı olarak silmek istediğinize emin misiniz?')) {
+        uygula(supabase.from(TABLO[tip]).delete().eq('id', ilan.id), 'İlan silindi.', 'İlan silinemedi');
+      }
+    },
+  };
+
+  // Sonraki tazelemelerde mevcut içerik ekranda kalır
   const bilgi = veri[0];
   const profil = bilgi?.profil ?? {};
   const ad = [profil.first_name, profil.last_name].filter(Boolean).join(' ') || user.email.split('@')[0];
+  const rol = ROLLER.find(([v]) => v === profil.rol)?.[0];
+  const yayindaki = bilgi
+    ? bilgi.yukler.filter((y) => ilanDurumu('yuk', y) === 'Yayında').length + bilgi.araclar.filter((a) => ilanDurumu('arac', a) === 'Yayında').length
+    : null;
 
   return (
     <>
-      <section className="bg-navy px-4 pt-3 pb-6 text-white lg:py-10">
+      <section className="hero-desen bg-navy px-4 pt-3 pb-5 text-white lg:py-10">
         <div className="mx-auto flex max-w-6xl items-center gap-4">
           <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-white/10"><User size={28} /></span>
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-xl font-extrabold">{ad}</h1>
-            <p className="truncate text-sm text-slate-300">{user.email}</p>
+            <h1 className="truncate text-xl font-bold">{ad}</h1>
+            <p className="truncate text-sm text-slate-300">
+              {[rol, yayindaki != null && `${yayindaki} yayında ilan`].filter(Boolean).join(' · ') || user.email}
+            </p>
           </div>
-          <button onClick={cikisYap} className="flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-white/10 px-3 text-sm font-bold hover:bg-white/20"><LogOut size={16} /> Çıkış</button>
         </div>
       </section>
 
       <div className="mx-auto max-w-6xl px-4 pt-4">
-        <div className="grid grid-cols-3 gap-1 rounded-2xl bg-slate-200/70 p-1 sm:max-w-md">
+        <div className="grid grid-cols-4 gap-1 rounded-2xl bg-slate-200/70 p-1 lg:max-w-2xl">
           {SEKMELER.map(([id, etiket]) => (
-            <button key={id} aria-pressed={sekme === id} onClick={() => setSekme(id)} className={`min-h-11 cursor-pointer rounded-xl text-sm font-bold ${sekme === id ? 'bg-white text-navy shadow-sm' : 'text-slate-500'}`}>{etiket}</button>
+            <button key={id} aria-pressed={sekme === id} onClick={() => adresDegistir(`/profil?sekme=${id}`)} className={`min-h-11 cursor-pointer rounded-xl px-1 text-xs font-bold sm:text-sm ${sekme === id ? 'bg-white text-navy shadow-sm' : 'text-slate-500'}`}>{etiket}</button>
           ))}
         </div>
 
+        {/* Alt kenarda sabit: kaydırılmış sayfada da görünür */}
         {mesaj && (
-          <p role="status" className={`mt-4 flex items-center gap-2 rounded-xl p-3 text-sm font-semibold ${mesaj.tip === 'basari' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-700'}`}>
+          <p role="status" className={`fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-md items-center gap-2 rounded-xl p-4 text-sm font-semibold text-white shadow-xl lg:bottom-8 ${mesaj.tip === 'basari' ? 'bg-green-700' : 'bg-red-700'}`}>
             {mesaj.tip === 'basari' ? <CheckCircle size={18} className="shrink-0" /> : <AlertCircle size={18} className="shrink-0" />} {mesaj.icerik}
           </p>
         )}
@@ -144,25 +112,21 @@ function ProfilIcerigi({ user }) {
         <div className="mt-4">
           {!bilgi ? <div className="grid gap-3"><Iskelet adet={3} className="h-28" /></div>
             : hata && !yukleniyor ? <HataDurumu onTekrar={yenile} />
-            : sekme === 'hesap' ? <HesapFormu userId={user.id} profil={profil} onSonuc={sonuc} />
-            : sekme === 'teklifler' ? <BosDurum mesaj="Henüz bir teklif bulunmuyor." />
-            : (
-              <div className="space-y-6">
-                <Link href="/ilan-ver" className="btn btn-brand w-full sm:w-auto"><Plus size={17} /> Yeni İlan Ekle</Link>
-                <IlanBolumu
-                  baslik="Yük İlanlarım" Ikon={Box} ilanlar={bilgi.yukler} bosMesaj="Yayınlanmış yük ilanınız bulunmuyor."
-                  ozet={(i) => [`${i.nereden || '—'} → ${i.nereye || '—'}`, `${i.yuk_turu || 'Genel Yük'} · ${i.agirlik_ton ?? '—'} Ton`]}
-                  onDuzenle={(ilan) => setDuzenlenen({ tip: 'yuk', ilan })}
-                  onSil={(ilan) => sil('yuk_ilanlari', ilan)}
-                />
-                <IlanBolumu
-                  baslik="Araç İlanlarım" Ikon={Truck} ilanlar={bilgi.araclar} bosMesaj="Yayınlanmış araç ilanınız bulunmuyor."
-                  ozet={(i) => [i.mevcut_konum_sehir, [i.arac_tipi, i.aciklama].filter(Boolean).join(' · ')]}
-                  onDuzenle={(ilan) => setDuzenlenen({ tip: 'arac', ilan })}
-                  onSil={(ilan) => sil('araclar', ilan)}
-                />
-              </div>
-            )}
+            : sekme === 'hesap' ? <Hesap user={user} profil={profil} onSonuc={sonuc} />
+            : sekme === 'eslesmeler' ? <Eslesmeler userId={user.id} yukler={bilgi.yukler} araclar={bilgi.araclar} />
+            : sekme === 'firmam' ? (
+              <Firmam
+                firmalar={bilgi.firmalar}
+                kullanilamiyor={bilgi.firmaHatasi}
+                onGirisGerekli={() => router.push('/login')}
+                onKaydedildi={() => sonuc('basari', 'Firma bilgileri kaydedildi.', true)}
+                onGorunurluk={(f) => uygula(supabase.from('firmalar').update({ is_active: !f.is_active }).eq('id', f.id), f.is_active ? 'Firmanız rehberden gizlendi.' : 'Firmanız yeniden yayında.', 'Firma güncellenemedi')}
+                onSil={(f) => {
+                  if (window.confirm(`"${f.firma_adi}" kalıcı olarak silinsin mi?`)) uygula(supabase.from('firmalar').delete().eq('id', f.id), 'Firma silindi.', 'Firma silinemedi');
+                }}
+              />
+            )
+            : <Ilanlarim yukler={bilgi.yukler} araclar={bilgi.araclar} {...ilanIslemleri} />}
         </div>
       </div>
 
@@ -170,7 +134,7 @@ function ProfilIcerigi({ user }) {
         <IlanDuzenle
           {...duzenlenen}
           onKapat={() => setDuzenlenen(null)}
-          onKaydet={() => { setDuzenlenen(null); sonuc('basari', 'İlan güncellendi.', true); }}
+          onKaydet={() => { setDuzenlenen(null); sonuc('basari', duzenlenen.yeniden ? 'İlan yeniden yayında.' : 'İlan güncellendi.', true); }}
         />
       )}
     </>
@@ -187,5 +151,9 @@ export default function ProfilePage() {
 
   if (!user) return <p className="p-20 text-center text-slate-500">Yükleniyor…</p>;
 
-  return <ProfilIcerigi user={user} />;
+  return (
+    <Suspense fallback={null}>
+      <ProfilIcerigi user={user} />
+    </Suspense>
+  );
 }

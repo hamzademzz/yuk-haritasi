@@ -3,7 +3,8 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Camera, Loader2, MapPin, Plus, Search, Truck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { adresDegistir, useEklePaneli, useSorgu } from '../../lib/hooks';
+import { adresDegistir, useEklePaneli, useIlanSahibi, useOturum, useSorgu } from '../../lib/hooks';
+import { sutunlar } from '../../lib/sutunlar';
 import { ARAC_TIPLERI, SEHIRLER } from '../../lib/constants';
 import { Alan, BosDurum, GirisPaneli, HataDurumu, Iskelet, Panel, SayfaBasligi } from '../../components/ui';
 import { IletisimSatiri } from '../../components/IlanKarti';
@@ -35,6 +36,7 @@ function AracFormu({ onKaydedildi, onGirisGerekli }) {
   const [resimYukleniyor, setResimYukleniyor] = useState(false);
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [hata, setHata] = useState('');
+  const sahip = useIlanSahibi();
 
   const resimSec = async (e) => {
     const dosya = e.target.files[0];
@@ -76,12 +78,14 @@ function AracFormu({ onKaydedildi, onGirisGerekli }) {
     }
   };
 
+  if (!sahip) return <p className="py-10 text-center text-sm text-slate-500">Form hazırlanıyor…</p>;
+
   return (
     <form onSubmit={kaydet} className="grid grid-cols-2 gap-3">
       <Alan etiket="Araç Tipi *"><input className="input" name="arac_tipi" list="arac-tipleri" required placeholder="Tır" /></Alan>
       <Alan etiket="Bulunduğu Şehir *"><input className="input" name="mevcut_konum_sehir" list="sehirler" required placeholder="Şehir" /></Alan>
-      <Alan etiket="Ad Soyad / Firma Adı *" className="col-span-2 sm:col-span-1"><input className="input" name="ilan_sahibi" required autoComplete="name" /></Alan>
-      <Alan etiket="İletişim Numarası *" className="col-span-2 sm:col-span-1"><input className="input" name="iletisim" required type="tel" autoComplete="tel" placeholder="05XX XXX XX XX" /></Alan>
+      <Alan etiket="Ad Soyad / Firma Adı *" className="col-span-2 sm:col-span-1"><input className="input" name="ilan_sahibi" defaultValue={sahip.ad} required autoComplete="name" /></Alan>
+      <Alan etiket="İletişim Numarası *" className="col-span-2 sm:col-span-1"><input className="input" name="iletisim" defaultValue={sahip.telefon} required type="tel" autoComplete="tel" placeholder="05XX XXX XX XX" /></Alan>
       <Alan etiket="Açıklama" className="col-span-2"><textarea className="input" name="aciklama" rows={3} placeholder="Aracınız hakkında kısa bilgi" /></Alan>
 
       <label className="col-span-2 flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-500 focus-within:border-brand">
@@ -105,9 +109,10 @@ function AracListesi() {
   const anahtar = JSON.stringify(secim);
   const filtreVar = Object.values(secim).some(Boolean);
   const { panel, ac, kapat, girisIste } = useEklePaneli();
+  const { user, hazir } = useOturum();
 
-  const { veri, hata, yukleniyor, yenile } = useSorgu(anahtar, () => {
-    let sorgu = supabase.from('araclar').select('*').eq('is_active', true);
+  const { veri, hata, yukleniyor, yenile } = useSorgu(`${anahtar}|${user?.id ?? ''}`, async () => {
+    let sorgu = supabase.from('araclar').select(await sutunlar('araclar')).eq('is_active', true);
     if (secim.konum) sorgu = sorgu.ilike('mevcut_konum_sehir', `%${secim.konum}%`);
     if (secim.tip) sorgu = sorgu.ilike('arac_tipi', `%${secim.tip}%`);
     return sorgu.order('olusturulma_tarihi', { ascending: false });
@@ -122,7 +127,7 @@ function AracListesi() {
       <div className="mx-auto -mt-8 max-w-6xl px-4 lg:-mt-10">
         <Filtre key={anahtar} ilk={secim} />
 
-        <div className="mt-4 grid gap-3 md:grid-cols-2 lg:mt-6 lg:gap-4 xl:grid-cols-3">
+        <div className="sirali mt-4 grid gap-3 md:grid-cols-2 lg:mt-6 lg:gap-4 xl:grid-cols-3">
           {yukleniyor ? <Iskelet className="h-72" />
             : hata ? <HataDurumu onTekrar={yenile} />
             : veri.length === 0 ? (
@@ -131,10 +136,10 @@ function AracListesi() {
               </BosDurum>
             )
             : veri.map((arac) => (
-              <article key={arac.id} className="card flex flex-col overflow-hidden">
-                <div className="relative aspect-[16/9] bg-slate-100">
+              <article key={arac.id} className="card group flex flex-col overflow-hidden">
+                <div className="relative aspect-[16/9] overflow-hidden bg-slate-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={arac.resim_url || VARSAYILAN_RESIM} alt={arac.arac_tipi} loading="lazy" className="size-full object-cover" />
+                  <img src={arac.resim_url || VARSAYILAN_RESIM} alt={arac.arac_tipi} loading="lazy" className="resim-gir size-full object-cover transition duration-700 group-hover:scale-105" />
                   <span className="absolute top-3 left-3 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-navy shadow">{arac.arac_tipi}</span>
                   <span className="absolute top-3 right-3 rounded-full bg-green-600 px-3 py-1 text-xs font-bold text-white shadow">Müsait</span>
                 </div>
@@ -142,7 +147,7 @@ function AracListesi() {
                   <p className="flex items-center gap-2 text-lg font-extrabold text-navy"><MapPin size={18} className="shrink-0 text-brand" /><span className="min-w-0 break-words">{arac.mevcut_konum_sehir}</span></p>
                   {arac.aciklama && <p className="mt-2 line-clamp-3 text-sm break-words text-slate-600">{arac.aciklama}</p>}
                 </div>
-                <IletisimSatiri ad={arac.ilan_sahibi || 'Firma Yetkilisi'} altYazi="Doğrulanmış araç sahibi" telefon={arac.iletisim} />
+                <IletisimSatiri ad={arac.ilan_sahibi || 'Firma Yetkilisi'} girisGerekli={hazir && !user} altYazi="Doğrulanmış araç sahibi" telefon={arac.iletisim} />
               </article>
             ))}
         </div>
